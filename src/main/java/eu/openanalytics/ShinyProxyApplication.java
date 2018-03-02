@@ -50,10 +50,12 @@ import io.undertow.server.handlers.proxy.LoadBalancingProxyClient;
 import io.undertow.server.handlers.proxy.ProxyHandler;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.util.PathMatcher;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
 @EnableAsync
 @Configuration
+@EnableSwagger2
 public class ShinyProxyApplication {
 
 	@Inject

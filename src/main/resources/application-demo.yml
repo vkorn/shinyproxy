@@ -6,7 +6,7 @@ shiny:
     heartbeat-rate: 10000
     heartbeat-timeout: 60000
     port: 8080
-    authentication: ldap
+    authentication: simple
     admin-groups: scientists
     # Example: 'simple' authentication configuration
     users:
