@@ -206,8 +206,11 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<executable>true</executable>
+					<mainClass>eu.openanalytics.ShinyProxyApplication</mainClass>
+					<finalName>ShinyProxy</finalName>
 				</configuration>
 			</plugin>
+
 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
