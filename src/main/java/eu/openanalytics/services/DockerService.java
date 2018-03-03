@@ -20,6 +20,49 @@
  */
 package eu.openanalytics.services;
 
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerCertificates;
+import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.DockerClient.LogsParam;
+import com.spotify.docker.client.DockerClient.RemoveContainerParam;
+import com.spotify.docker.client.LogStream;
+import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerCreation;
+import com.spotify.docker.client.messages.ContainerInfo;
+import com.spotify.docker.client.messages.HostConfig;
+import com.spotify.docker.client.messages.HostConfig.Builder;
+import com.spotify.docker.client.messages.PortBinding;
+import com.spotify.docker.client.messages.mount.Mount;
+import com.spotify.docker.client.messages.swarm.ContainerSpec;
+import com.spotify.docker.client.messages.swarm.DnsConfig;
+import com.spotify.docker.client.messages.swarm.EndpointSpec;
+import com.spotify.docker.client.messages.swarm.NetworkAttachmentConfig;
+import com.spotify.docker.client.messages.swarm.Node;
+import com.spotify.docker.client.messages.swarm.PortConfig;
+import com.spotify.docker.client.messages.swarm.ServiceSpec;
+import com.spotify.docker.client.messages.swarm.Task;
+import com.spotify.docker.client.messages.swarm.TaskSpec;
+import eu.openanalytics.ShinyProxyException;
+import eu.openanalytics.services.AppService.ShinyApp;
+import eu.openanalytics.services.EventService.EventType;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.LogWatch;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.Cookie;
+import io.undertow.servlet.handlers.ServletRequestContext;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -45,12 +88,10 @@ import java.util.function.IntPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
 import org.springframework.context.annotation.Bean;
@@ -58,51 +99,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.WebUtils;
-
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerCertificates;
-import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.DockerClient.LogsParam;
-import com.spotify.docker.client.DockerClient.RemoveContainerParam;
-import com.spotify.docker.client.LogStream;
-import com.spotify.docker.client.exceptions.DockerCertificateException;
-import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.ContainerInfo;
-import com.spotify.docker.client.messages.HostConfig;
-import com.spotify.docker.client.messages.HostConfig.Builder;
-import com.spotify.docker.client.messages.PortBinding;
-import com.spotify.docker.client.messages.mount.Mount;
-import com.spotify.docker.client.messages.swarm.ContainerSpec;
-import com.spotify.docker.client.messages.swarm.DnsConfig;
-import com.spotify.docker.client.messages.swarm.EndpointSpec;
-import com.spotify.docker.client.messages.swarm.NetworkAttachmentConfig;
-import com.spotify.docker.client.messages.swarm.Node;
-import com.spotify.docker.client.messages.swarm.PortConfig;
-import com.spotify.docker.client.messages.swarm.ServiceSpec;
-import com.spotify.docker.client.messages.swarm.Task;
-import com.spotify.docker.client.messages.swarm.TaskSpec;
-
-import eu.openanalytics.ShinyProxyException;
-import eu.openanalytics.services.AppService.ShinyApp;
-import eu.openanalytics.services.EventService.EventType;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.LocalObjectReference;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.LogWatch;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.Cookie;
-import io.undertow.servlet.handlers.ServletRequestContext;
 
 @Service
 public class DockerService {
@@ -456,18 +452,34 @@ public class DockerService {
 				Pod pod = kubeClient.pods().inNamespace(kubeNamespace).createNew()
 						.withApiVersion("v1")
 						.withKind("Pod")
-						.withNewMetadata()
-							.withName(proxy.name)
+						.withNewMetadata().
+								withNamespace(
+										environment.getProperty("shiny.proxy.docker.kubernetes-namespace", "default"))
+						.withName(proxy.name)
 						.endMetadata()
 						.withNewSpec()
-							.withContainers(Collections.singletonList(containerBuilder.build()))
-							.withVolumes(Arrays.asList(volumes))
-							.withImagePullSecrets(Arrays.asList(imagePullSecrets).stream()
+						.withContainers(Collections.singletonList(containerBuilder.build()))
+						.withVolumes(Arrays.asList(volumes))
+						.withImagePullSecrets(Arrays.asList(imagePullSecrets).stream()
 								.map(LocalObjectReference::new).collect(Collectors.toList()))
 						.endSpec()
 						.done();
 
-				proxy.kubePod = pod = kubeClient.resource(pod).waitUntilReady(20, TimeUnit.SECONDS);
+				try {
+					proxy.kubePod = pod = kubeClient.resource(pod).waitUntilReady(
+							Integer.parseInt(environment.getProperty("shiny.proxy.container-wait-time", "20000")),
+							TimeUnit.MILLISECONDS);
+					log.info("pod created successfully   " + proxy.name);
+				}
+				catch (Exception e){
+					try {
+						kubeClient.pods().delete(pod);
+					}catch(Exception e1)
+					{
+						log.error("failed to delete pod  " + proxy.name);
+					}
+					throw e;
+				}
 				if (internalNetworking) {
 					proxy.host = pod.getStatus().getPodIP();
 				} else {

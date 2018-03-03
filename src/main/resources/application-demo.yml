@@ -26,9 +26,10 @@ shiny:
       manager-password: password
     # Docker configuration
     docker:
-      cert-path: /home/none
-      url: http://localhost:2375
-      port-range-start: 20000
+      kubernetes: true
+      kubernetes-image-pull-policy: Always
+      kubernetes-image-pull-secrets: imgpullsecret
+      internal-networking: true
   apps:
   - name: 01_hello
     display-name: Hello Application
