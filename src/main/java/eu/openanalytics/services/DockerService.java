@@ -177,18 +177,25 @@ public class DockerService {
 	public void init() {
 		if (kubernetes) {
 			log.info("Kubernetes is enabled");
+      startCleanUpThread();
 			return;
 		}
+
 		try {
 			swarmMode = (dockerClient.inspectSwarm().id() != null);
 		} catch (DockerException | InterruptedException e) {}
 		log.info(String.format("Swarm mode is %s", (swarmMode ? "enabled" : "disabled")));
 
-		Thread heartbeatThread = new Thread(new AppCleaner(), "HeartbeatThread");
-		heartbeatThread.setDaemon(true);
-		heartbeatThread.start();
+    startCleanUpThread();
 	}
-	
+
+	private void startCleanUpThread(){
+    System.out.println("Starting clean up thread");
+     log.info("Starting clean up thread");
+    Thread heartbeatThread = new Thread(new AppCleaner(), "HeartbeatThread");
+    heartbeatThread.setDaemon(true);
+    heartbeatThread.start();
+  }
 	
 	@PreDestroy
 	public void shutdown() {
