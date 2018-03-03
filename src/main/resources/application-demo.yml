@@ -51,5 +51,7 @@ shiny:
     groups: scientists
 
 logging:
+  level:
+    debug
   file:
-    shinyproxy.log
+    shinyproxy1.log
