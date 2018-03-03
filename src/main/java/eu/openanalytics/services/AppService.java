@@ -24,9 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.inject.Inject;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -70,7 +68,14 @@ public class AppService {
 		private Integer port;
 		private String kubernetesNamespace;
 		private String kubernetesImagePullPolicy;
-		
+
+		/*custome added*/
+
+		private String kubernetesMemoryRequest;
+		private String kubernetesMemoryLimit;
+		private String kubernetesCpuRequest;
+		private String kubernetesCpuLimit;
+
 		public String getName() {
 			return name;
 		}
@@ -191,6 +196,38 @@ public class AppService {
 		}
 		public void setKubernetesImagePullPolicy(String kubernetesImagePullPolicy) {
 			this.kubernetesImagePullPolicy = kubernetesImagePullPolicy;
+		}
+
+		public String getKubernetesMemoryRequest() {
+			return kubernetesMemoryRequest;
+		}
+
+		public void setKubernetesMemoryRequest(String kubernetesMemoryRequest) {
+			this.kubernetesMemoryRequest = kubernetesMemoryRequest;
+		}
+
+		public String getKubernetesMemoryLimit() {
+			return kubernetesMemoryLimit;
+		}
+
+		public void setKubernetesMemoryLimit(String kubernetesMemoryLimit) {
+			this.kubernetesMemoryLimit = kubernetesMemoryLimit;
+		}
+
+		public String getKubernetesCpuRequest() {
+			return kubernetesCpuRequest;
+		}
+
+		public void setKubernetesCpuRequest(String kubernetesCpuRequest) {
+			this.kubernetesCpuRequest = kubernetesCpuRequest;
+		}
+
+		public String getKubernetesCpuLimit() {
+			return kubernetesCpuLimit;
+		}
+
+		public void setKubernetesCpuLimit(String kubernetesCpuLimit) {
+			this.kubernetesCpuLimit = kubernetesCpuLimit;
 		}
 	}
 }

@@ -449,6 +449,12 @@ public class DockerService {
 						imagePullSecrets = new String[0];
 					}
 				}
+
+				 String kubernetesMemoryRequest = Optional.ofNullable(app.getKubernetesMemoryRequest()).orElse("600Mb");
+				 String kubernetesMemoryLimit = Optional.ofNullable(app.getKubernetesMemoryLimit()).orElse("1Gi");
+				 String kubernetesCpuRequest = Optional.ofNullable(app.getKubernetesCpuRequest()).orElse("500m");
+				 String kubernetesCpuLimit = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("1");
+
 				Pod pod = kubeClient.pods().inNamespace(kubeNamespace).createNew()
 						.withApiVersion("v1")
 						.withKind("Pod")
@@ -460,6 +466,7 @@ public class DockerService {
 						.withVolumes(Arrays.asList(volumes))
 						.withImagePullSecrets(Arrays.asList(imagePullSecrets).stream()
 								.map(LocalObjectReference::new).collect(Collectors.toList()))
+
 						.endSpec()
 						.done();
 
@@ -795,25 +802,33 @@ public class DockerService {
 	private class AppCleaner implements Runnable {
 		@Override
 		public void run() {
+			log.info("In AppCleaner ...");
+			System.out.println("In AppCleaner ...");
 			long cleanupInterval = 2 * Long.parseLong(environment.getProperty("shiny.proxy.heartbeat-rate", "10000"));
 			long heartbeatTimeout = Long.parseLong(environment.getProperty("shiny.proxy.heartbeat-timeout", "60000"));
 			
 			while (true) {
 				try {
+
 					List<Proxy> proxiesToRemove = new ArrayList<>();
 					long currentTimestamp = System.currentTimeMillis();
 					synchronized (activeProxies) {
 						for (Proxy proxy: activeProxies) {
+							log.info("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name);
 							Long lastHeartbeat = proxy.lastHeartbeatTimestamp;
 							if (lastHeartbeat == null) lastHeartbeat = proxy.startupTimestamp;
 							long proxySilence = currentTimestamp - lastHeartbeat;
-							if (proxySilence > heartbeatTimeout) {
+							log.info("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
+							System.out.println("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
+								if (proxySilence > heartbeatTimeout) {
+								log.info("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence " + proxySilence + "heartbeatTimeout " + heartbeatTimeout);
 								log.info(String.format("Releasing inactive proxy [user: %s] [app: %s] [silence: %dms]", proxy.userName, proxy.appName, proxySilence));
 								proxiesToRemove.add(proxy);
 							}
 						}
 					}
 					for (Proxy proxy: proxiesToRemove) {
+						log.info(String.format("Releasing inactive proxy [user: %s] [app: %s] [silence: %dms]", proxy.userName, proxy.appName));
 						releaseProxy(proxy, true);
 					}
 				} catch (Throwable t) {

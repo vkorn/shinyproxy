@@ -1,3 +1,6 @@
+server:
+  session:
+    timeout:
 shiny:
   proxy:
     title: Open Analytics Shiny Proxy
@@ -37,7 +40,11 @@ shiny:
     docker-cmd: ["R", "-e", "shinyproxy::run_01_hello()"]
     docker-image: openanalytics/shinyproxy-demo
     groups: scientists, mathematicians
-    kubernetes-namespace: kty
+    kubernetes-namespace: shiny
+    kubernetes-memory-request: 600Mb
+    kubernetes-memory-limit: 1Gi
+    kubernetes-cpu-request: 500m
+    kubernetes-cpu-limit: 1
   - name: 06_tabsets
     docker-cmd: ["R", "-e", "shinyproxy::run_06_tabsets()"]
     docker-image: openanalytics/shinyproxy-demo
