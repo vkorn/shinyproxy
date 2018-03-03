@@ -449,7 +449,7 @@ public class DockerService {
 						imagePullSecrets = new String[0];
 					}
 				}
-				Pod pod = kubeClient.pods().inNamespace(kubeNamespace).createNew()
+				Pod pod = kubeClient.pods().createNew()
 						.withApiVersion("v1")
 						.withKind("Pod")
 						.withNewMetadata().
