@@ -426,8 +426,8 @@ public class DockerService {
 					envVars.add(new EnvVar(envString.substring(0, idx), envString.substring(idx + 1), null));
 				}
 
-				String k8sMemoryRequest = Optional.ofNullable(app.getKubernetesMemoryRequest()).orElse("600Mb");
-				String k8sMemoryLimit = Optional.ofNullable(app.getKubernetesMemoryLimit()).orElse("1Gi");
+				String k8sMemoryRequest = Optional.ofNullable(app.getKubernetesMemoryRequest()).orElse("600M");
+				String k8sMemoryLimit = Optional.ofNullable(app.getKubernetesMemoryLimit()).orElse("1G");
 				String k8sCpuRequest = Optional.ofNullable(app.getKubernetesCpuRequest()).orElse("500m");
 				String k8sCpuLimit = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("1");
 
