@@ -47,15 +47,7 @@ import com.spotify.docker.client.messages.swarm.TaskSpec;
 import eu.openanalytics.ShinyProxyException;
 import eu.openanalytics.services.AppService.ShinyApp;
 import eu.openanalytics.services.EventService.EventType;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.LocalObjectReference;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -433,10 +425,22 @@ public class DockerService {
 					}
 					envVars.add(new EnvVar(envString.substring(0, idx), envString.substring(idx + 1), null));
 				}
+
+				String k8sMemoryRequest = Optional.ofNullable(app.getKubernetesMemoryRequest()).orElse("600Mb");
+				String k8sMemoryLimit = Optional.ofNullable(app.getKubernetesMemoryLimit()).orElse("1Gi");
+				String k8sCpuRequest = Optional.ofNullable(app.getKubernetesCpuRequest()).orElse("500m");
+				String k8sCpuLimit = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("1");
+
 				ContainerBuilder containerBuilder = new ContainerBuilder()
 						.withImage(app.getDockerImage())
 						.withName("shiny-container")
 						.withPorts(containerPortBuilder.build())
+						.withNewResources()
+							.addToLimits("cpu", new Quantity(k8sCpuLimit))
+							.addToLimits("memory", new Quantity(k8sMemoryLimit))
+							.addToRequests("cpu", new Quantity(k8sCpuRequest))
+							.addToRequests("memory", new Quantity(k8sMemoryRequest))
+						.endResources()
 						.withEnv(envVars);
 
 				String imagePullPolicy = environment.getProperty("shiny.proxy.docker.kubernetes-image-pull-policy", app.getKubernetesImagePullPolicy());
@@ -456,11 +460,6 @@ public class DockerService {
 						imagePullSecrets = new String[0];
 					}
 				}
-
-				 String kubernetesMemoryRequest = Optional.ofNullable(app.getKubernetesMemoryRequest()).orElse("600Mb");
-				 String kubernetesMemoryLimit = Optional.ofNullable(app.getKubernetesMemoryLimit()).orElse("1Gi");
-				 String kubernetesCpuRequest = Optional.ofNullable(app.getKubernetesCpuRequest()).orElse("500m");
-				 String kubernetesCpuLimit = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("1");
 
 				Pod pod = kubeClient.pods().inNamespace(kubeNamespace).createNew()
 						.withApiVersion("v1")
