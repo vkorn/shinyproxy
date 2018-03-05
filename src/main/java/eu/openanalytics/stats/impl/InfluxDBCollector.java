@@ -25,6 +25,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
@@ -41,15 +43,26 @@ public class InfluxDBCollector implements IStatCollector {
 
 	@Override
 	public void accept(Event event, Environment env) throws IOException {
+		String username = env.getProperty("shiny.proxy.usage-stats-username");
+		String password = env.getProperty("shiny.proxy.usage-stats-password");
+		String authHeader = "";
+		if (!username.isEmpty() && !password.isEmpty()){
+			authHeader = Base64.getEncoder().encodeToString((username+":"+password).getBytes(StandardCharsets.UTF_8));
+		}
+
 		String destination = env.getProperty("shiny.proxy.usage-stats-url");
 		String data = Optional.ofNullable(event.data).orElse("");
 		String body = String.format("event,username=%s,type=%s data=\"%s\"", event.user.replace(" ", "\\ "), event.type.replace(" ", "\\ "), data);
-		doPost(destination, body);
+		doPost(destination, body, authHeader);
 	}
 	
-	private void doPost(String url, String body) throws IOException {
+	private void doPost(String url, String body, String authHeader) throws IOException {
 		HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 		conn.setRequestMethod("POST");
+		if(!authHeader.isEmpty()){
+			conn.setRequestProperty("Authorization", "Basic " + authHeader);
+		}
+
 		conn.setDoOutput(true);
 		try (DataOutputStream dos = new DataOutputStream(conn.getOutputStream())) {
 			dos.writeBytes(body);
