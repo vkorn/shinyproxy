@@ -20,6 +20,9 @@
  */
 package eu.openanalytics.services;
 
+import com.spotify.docker.client.LogStream;
+import eu.openanalytics.domain.Proxy;
+import io.fabric8.kubernetes.client.dsl.LogWatch;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,12 +31,10 @@ import java.nio.file.Paths;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.mail.internet.MimeMessage;
-
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.h2.util.IOUtils;
@@ -42,11 +43,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import com.spotify.docker.client.LogStream;
-
-import eu.openanalytics.services.DockerService.Proxy;
-import io.fabric8.kubernetes.client.dsl.LogWatch;
 
 @Service
 public class LogService {

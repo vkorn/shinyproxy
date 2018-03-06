@@ -20,6 +20,9 @@
  */
 package eu.openanalytics.services;
 
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IList;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerCertificates;
 import com.spotify.docker.client.DockerClient;
@@ -45,9 +48,19 @@ import com.spotify.docker.client.messages.swarm.ServiceSpec;
 import com.spotify.docker.client.messages.swarm.Task;
 import com.spotify.docker.client.messages.swarm.TaskSpec;
 import eu.openanalytics.ShinyProxyException;
+import eu.openanalytics.domain.Proxy;
 import eu.openanalytics.services.AppService.ShinyApp;
 import eu.openanalytics.services.EventService.EventType;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.LocalObjectReference;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -66,7 +79,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -94,15 +106,36 @@ import org.springframework.web.util.WebUtils;
 
 @Service
 public class DockerService {
-		
+
+
+	private HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+
 	private Logger log = Logger.getLogger(DockerService.class);
 	private Random rng = new Random();
 
-	private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
-	private List<Proxy> activeProxies = Collections.synchronizedList(new ArrayList<>());
+/*	private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
+	private List<Proxy> activeProxies = Collections.synchronizedList(new ArrayList<>());*/
+
+	private List<Proxy> launchingProxies = Collections.synchronizedList(hz.getList("launchingProxies"));
+	private List<Proxy> activeProxies = Collections.synchronizedList(hz.getList("activeProxies"));
 	
+
 	private List<MappingListener> mappingListeners = Collections.synchronizedList(new ArrayList<>());
-	private Set<Integer> occupiedPorts = Collections.synchronizedSet(new HashSet<>());
+
+/*	private List<MappingListener> mappingListeners = Collections.synchronizedList(hz.getList("mappingListeners"));*/
+	/*private Set<Integer> occupiedPorts = Collections.synchronizedSet(new HashSet<>());*/
+	private Set<Integer> occupiedPorts = Collections.synchronizedSet(hz.getSet("occupiedPorts"));
+
+
+	/*private List<String> launchingProxies1 = Collections.synchronizedList(hz.getList("launchingProxies1"));
+	private List<Proxy> launchingProxies2 = Collections.synchronizedList(new ArrayList<>());
+	private List<MappingListener> mappingListeners1 = Collections.synchronizedList(new ArrayList<>());*/
+
+	/*private List<Proxy> launchingProxies = Collections.synchronizedList(hz.getList("launchingProxies"));
+	private List<Proxy> activeProxies = Collections.synchronizedList(Hazelcast.newHazelcastInstance().getList("activeProxies"));*/
+
+	/*private List<MappingListener> mappingListeners = Collections.synchronizedList(hz.getList("mappingListeners"));
+	private Set<Integer> occupiedPorts = Collections.synchronizedSet(hz.getSet("occupiedPorts"));*/
 
 	private ExecutorService containerKiller = Executors.newSingleThreadExecutor();
 	
@@ -129,8 +162,26 @@ public class DockerService {
 
 	@Inject
 	KubernetesClient kubeClient;
+
+	public void addElementToList(){
+    //HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+    IList<String> list = hz.getList("list");
+    list.add("Tokyo");
+    list.add("Paris");
+    list.add("London");
+    list.add("New York");
+    System.out.println("Putting finished!");
+  }
+
+  public  void getElement(){
+    IList<String> list = hz.getList("list");
+    for (String s : list) {
+      System.out.println(s);
+    }
+    System.out.println("Reading finished!");
+  }
 	
-	public static class Proxy {
+	/*public static class Proxy {
 
 		public String name;
 		public String protocol;
@@ -163,10 +214,12 @@ public class DockerService {
 			target.startupTimestamp = this.startupTimestamp;
 			return target;
 		}
-	}
+	}*/
 	
 	@PostConstruct
 	public void init() {
+    hz = Hazelcast.newHazelcastInstance();
+
 		if (kubernetes) {
 			log.info("Kubernetes is enabled");
       startCleanUpThread();

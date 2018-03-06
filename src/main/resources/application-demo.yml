@@ -8,6 +8,8 @@ shiny:
     landing-page: /
     heartbeat-rate: 10000
     heartbeat-timeout: 60000
+    container-wait-time: 120000
+    container-wait-timeout: 5000
     port: 8080
     authentication: simple
     admin-groups: scientists
@@ -29,10 +31,13 @@ shiny:
       manager-password: password
     # Docker configuration
     docker:
-      kubernetes: true
+      url: http://localhost:2375
+      kubernetes: false
       kubernetes-image-pull-policy: Always
       kubernetes-image-pull-secrets: imgpullsecret
-      internal-networking: true
+      internal-networking: false
+      port-range-start: 3838
+      port-range-max: 4000
   apps:
   - name: 01_hello
     display-name: Hello Application
