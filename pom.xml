@@ -222,7 +222,8 @@
 		<!--Hazelcast dependency-->
 		<dependency>
 			<groupId>com.hazelcast</groupId>
-			<artifactId>hazelcast</artifactId>
+			<artifactId>hazelcast-all</artifactId>
+			<version>3.10-SNAPSHOT</version>
 			<!-- Version is managed by Spring Boot starter -->
 		</dependency>
 		<dependency>

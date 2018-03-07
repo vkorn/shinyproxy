@@ -48,6 +48,7 @@ import com.spotify.docker.client.messages.swarm.ServiceSpec;
 import com.spotify.docker.client.messages.swarm.Task;
 import com.spotify.docker.client.messages.swarm.TaskSpec;
 import eu.openanalytics.ShinyProxyException;
+import eu.openanalytics.domain.Apple;
 import eu.openanalytics.domain.Proxy;
 import eu.openanalytics.services.AppService.ShinyApp;
 import eu.openanalytics.services.EventService.EventType;
@@ -85,6 +86,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -112,12 +114,19 @@ public class DockerService {
 
 	private Logger log = Logger.getLogger(DockerService.class);
 	private Random rng = new Random();
-/*
-	private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
+	/*private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
 	private List<Proxy> activeProxies = Collections.synchronizedList(new ArrayList<>());*/
 
-	private List<Proxy> launchingProxies = Collections.synchronizedList(hz.getList("launchingProxies"));
-	private List<Proxy> activeProxies = Collections.synchronizedList(hz.getList("activeProxies"));
+	//private ICollection<Proxy> launchingProxies = hz.getSet("launchingProxies");
+
+	private ConcurrentMap<Integer, Proxy> launchingProxiesMap = hz.getMap("launchingProxiesMap");
+	private ConcurrentMap<Integer, Proxy> activeProxiesMap = hz.getMap("activeProxiesMap");
+
+
+	//private IList<Proxy> activeProxies = hz.getList("activeProxies");
+
+	private IList<Apple> launchingApple = hz.getList("launchingApple");
+	private IList<Apple> activeApple= hz.getList("activeApple");
 	private Map<String,String> activeProxySessionId = Collections.synchronizedMap(hz.getMap("activeProxySessionId"));
 	
 
@@ -142,6 +151,7 @@ public class DockerService {
 	
 	private boolean swarmMode = false;
 	private boolean kubernetes = false;
+	Apple a;
 
 	@Inject
 	Environment environment;
@@ -163,6 +173,36 @@ public class DockerService {
 
 	@Inject
 	KubernetesClient kubeClient;
+
+	public void addAndRemoveappleApple(){
+		a = new Apple();
+		a.setName("green");
+		launchingApple.add(a);
+		a.setId(100);
+		activeApple.add(a);
+		launchingApple.remove(a);
+		//launchingApple.
+		for (Apple l : launchingApple){
+			System.out.println(l.getName());
+			if(l.getName().equalsIgnoreCase("green"))
+			{
+				launchingApple.remove(l);
+			}
+
+		}
+
+		for (Apple l : launchingApple){
+			System.out.println(l.getName());
+
+
+		}
+		for (Apple l : activeApple){
+			System.out.println(l.getName());
+
+
+		}
+
+	}
 
 	public void addElementToList(){
     //HazelcastInstance hz = Hazelcast.newHazelcastInstance();
@@ -216,6 +256,159 @@ public class DockerService {
 			return target;
 		}
 	}*/
+
+	/*public static class Proxy implements Serializable {
+
+		//private HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+		private String name;
+		private String protocol;
+		private String host;
+		private int port;
+		private String containerId;
+		private String serviceId;
+		private String userName;
+		private String appName;
+		// public Set<String> sessionIds = hz.getSet("sessionIds");
+		private Set<String> sessionIds = new HashSet<>();
+		private long startupTimestamp;
+		private Long lastHeartbeatTimestamp;
+		private Pod kubePod;
+
+		public String uptime() {
+			long uptimeSec = (System.currentTimeMillis() - startupTimestamp) / 1000;
+			return String.format("%d:%02d:%02d", uptimeSec / 3600, (uptimeSec % 3600) / 60, uptimeSec % 60);
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			Proxy proxy = (Proxy) o;
+			return port == proxy.port &&
+					Objects.equals(userName, proxy.userName) &&
+					Objects.equals(appName, proxy.appName);
+		}
+
+		@Override
+		public int hashCode() {
+
+			return Objects.hash(port, userName, appName);
+		}
+
+		public eu.openanalytics.services.DockerService.Proxy copyInto(eu.openanalytics.services.DockerService.Proxy target) {
+			target.name = this.name;
+			target.protocol = this.protocol;
+			target.host = this.host;
+			target.port = this.port;
+			target.containerId = this.containerId;
+			target.serviceId = this.serviceId;
+			target.userName = this.userName;
+			target.appName = this.appName;
+			// target.sessionIds = this.sessionIds;
+			target.startupTimestamp = this.startupTimestamp;
+			return target;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getProtocol() {
+			return protocol;
+		}
+
+		public void setProtocol(String protocol) {
+			this.protocol = protocol;
+		}
+
+		public String getHost() {
+			return host;
+		}
+
+		public void setHost(String host) {
+			this.host = host;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public void setPort(int port) {
+			this.port = port;
+		}
+
+		public String getContainerId() {
+			return containerId;
+		}
+
+		public void setContainerId(String containerId) {
+			this.containerId = containerId;
+		}
+
+		public String getServiceId() {
+			return serviceId;
+		}
+
+		public void setServiceId(String serviceId) {
+			this.serviceId = serviceId;
+		}
+
+		public String getUserName() {
+			return userName;
+		}
+
+		public void setUserName(String userName) {
+			this.userName = userName;
+		}
+
+		public String getAppName() {
+			return appName;
+		}
+
+		public void setAppName(String appName) {
+			this.appName = appName;
+		}
+
+		public Set<String> getSessionIds() {
+			return sessionIds;
+		}
+
+		public void setSessionIds(Set<String> sessionIds) {
+			this.sessionIds = sessionIds;
+		}
+
+		public long getStartupTimestamp() {
+			return startupTimestamp;
+		}
+
+		public void setStartupTimestamp(long startupTimestamp) {
+			this.startupTimestamp = startupTimestamp;
+		}
+
+		public Long getLastHeartbeatTimestamp() {
+			return lastHeartbeatTimestamp;
+		}
+
+		public void setLastHeartbeatTimestamp(Long lastHeartbeatTimestamp) {
+			this.lastHeartbeatTimestamp = lastHeartbeatTimestamp;
+		}
+
+		public Pod getKubePod() {
+			return kubePod;
+		}
+
+		public void setKubePod(Pod kubePod) {
+			this.kubePod = kubePod;
+		}
+	}*/
 	
 	@PostConstruct
 	public void init() {
@@ -232,7 +425,7 @@ public class DockerService {
 		} catch (DockerException | InterruptedException e) {}
 		log.info(String.format("Swarm mode is %s", (swarmMode ? "enabled" : "disabled")));
 
-    startCleanUpThread();
+    //startCleanUpThread();
 	}
 
 	private void startCleanUpThread(){
@@ -247,8 +440,9 @@ public class DockerService {
 	public void shutdown() {
 		containerKiller.shutdown();
 		List<Proxy> proxiesToRelease = new ArrayList<>();
-		synchronized (activeProxies) {
-			proxiesToRelease.addAll(activeProxies);
+		synchronized (activeProxiesMap) {
+			activeProxiesMap.keySet().stream().forEach(s->proxiesToRelease.add(activeProxiesMap.get(s)));
+			//proxiesToRelease.addAll(activeProxies);
 		}
 		for (Proxy proxy: proxiesToRelease) releaseProxy(proxy, false);
 	}
@@ -285,8 +479,8 @@ public class DockerService {
 	}
 	
 	public List<Proxy> listProxies() {
-		synchronized (activeProxies) {
-			return activeProxies.stream().map(p -> p.copyInto(new Proxy())).collect(Collectors.toList());
+		synchronized (activeProxiesMap) {
+			return activeProxiesMap.keySet().stream().map(p -> activeProxiesMap.get(p).copyInto(new Proxy())).collect(Collectors.toList());
 		}
 	}
 
@@ -301,8 +495,8 @@ public class DockerService {
 			return null;
 		} else {
 			//proxy.sessionIds.add(getCurrentSessionId(request));
-			activeProxySessionId.put(proxy.name,getCurrentSessionId(request));
-			return proxy.name;
+			activeProxySessionId.put(proxy.getName(),getCurrentSessionId(request));
+			return proxy.getName();
 		}
 	}
 	
@@ -310,18 +504,25 @@ public class DockerService {
 		String sessionId = getCurrentSessionId(exchange);
 		if (sessionId == null) return false;
 		String proxyName = exchange.getRelativePath();
-		synchronized (activeProxies) {
-			for (Proxy p: activeProxies) {
+		synchronized (activeProxiesMap) {
+		//	for (Proxy p: activeProxies) {
 				//if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name))
-				if (activeProxySessionId.get(p.name).equalsIgnoreCase(sessionId) && proxyName.startsWith("/" + p.name)){
+			Set<Integer> keySet = activeProxiesMap.keySet();
+			for(Integer key : keySet) {
+				if (activeProxySessionId.get(activeProxiesMap.get(key).getName()).equalsIgnoreCase(sessionId) && proxyName
+						.startsWith("/" + activeProxiesMap.get(key).getName())) {
 					return true;
 				}
 			}
-		}
-		synchronized (launchingProxies) {
-			for (Proxy p: launchingProxies) {
+
+
+	}
+		synchronized (launchingProxiesMap) {
+		//	for (Proxy p: launchingProxies) {
+			Set<Integer> integers = launchingProxiesMap.keySet();
+			for(Integer i : integers){
 			//	if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name)) {
-				if (activeProxySessionId.get(p.name).equalsIgnoreCase(sessionId) && proxyName.startsWith("/" + p.name)){
+				if (activeProxySessionId.get(launchingProxiesMap.get(i).getName()).equalsIgnoreCase(sessionId) && proxyName.startsWith("/" + launchingProxiesMap.get(i).getName())){
 					return true;
 				}
 			}
@@ -331,10 +532,15 @@ public class DockerService {
 	
 	public List<Proxy> releaseProxies(String userName) {
 		List<Proxy> proxiesToRelease = new ArrayList<>();
-		synchronized (activeProxies) {
-			for (Proxy proxy: activeProxies) {
-				if (userName.equals(proxy.userName)) proxiesToRelease.add(proxy);
-			}
+		synchronized (activeProxiesMap) {
+			/*for (Proxy proxy: activeProxies) {
+				if (userName.equals(proxy.getUserName())) proxiesToRelease.add(proxy);
+			}*/
+			activeProxiesMap.keySet().stream().forEach(k -> {
+				if (userName.equalsIgnoreCase(activeProxiesMap.get(k).getUserName())) {
+					proxiesToRelease.add(activeProxiesMap.get(k));
+				}
+			});
 		}
 		for (Proxy proxy: proxiesToRelease) {
 			releaseProxy(proxy, true);
@@ -369,28 +575,29 @@ public class DockerService {
 	}
 	
 	private void releaseProxy(Proxy proxy, boolean async) {
-		activeProxies.remove(proxy);
+		//activeProxies.remove(proxy);
+		activeProxiesMap.remove(proxy.hashCode());
 		
 		Runnable releaser = () -> {
 			try {
 				if (kubernetes) {
-					kubeClient.pods().delete(proxy.kubePod);
+					kubeClient.pods().delete(proxy.getKubePod());
 				} else if (swarmMode) {
-					dockerClient.removeService(proxy.serviceId);
+					dockerClient.removeService(proxy.getServiceId());
 				} else {
-					ShinyApp app = appService.getApp(proxy.appName);
+					ShinyApp app = appService.getApp(proxy.getAppName());
 					if (app != null && app.getDockerNetworkConnections() != null) {
 						for (String networkConnection: app.getDockerNetworkConnections()) {
-							dockerClient.disconnectFromNetwork(proxy.containerId, networkConnection);
+							dockerClient.disconnectFromNetwork(proxy.getContainerId(), networkConnection);
 						}
 					}
-					dockerClient.removeContainer(proxy.containerId, RemoveContainerParam.forceKill());
+					dockerClient.removeContainer(proxy.getContainerId(), RemoveContainerParam.forceKill());
 				}
-				releasePort(proxy.port);
-				log.info(String.format("Proxy released [user: %s] [app: %s] [port: %d]", proxy.userName, proxy.appName, proxy.port));
-				eventService.post(EventType.AppStop.toString(), proxy.userName, proxy.appName);
+				releasePort(proxy.getPort());
+				log.info(String.format("Proxy released [user: %s] [app: %s] [port: %d]", proxy.getUserName(), proxy.getAppName(), proxy.getPort()));
+				eventService.post(EventType.AppStop.toString(), proxy.getUserName(), proxy.getAppName());
 			} catch (Exception e){
-				log.error("Failed to release proxy " + proxy.name, e);
+				log.error("Failed to release proxy " + proxy.getName(), e);
 			}
 		};
 		if (async) containerKiller.submit(releaser);
@@ -398,12 +605,13 @@ public class DockerService {
 
 		synchronized (mappingListeners) {
 			for (MappingListener listener: mappingListeners) {
-				listener.mappingRemoved(proxy.name);
+				listener.mappingRemoved(proxy.getName());
 			}
 		}
 	}
 
 	private Proxy startProxy(String userName, String appName) {
+
 		ShinyApp app = appService.getApp(appName);
 		if (app == null) {
 			throw new ShinyProxyException("Cannot start container: unknown application: " + appName);
@@ -418,14 +626,16 @@ public class DockerService {
 			"true".equals(environment.getProperty("shiny.proxy.docker.generate-name", String.valueOf(internalNetworking)));
 
 		Proxy proxy = new Proxy();
-		proxy.userName = userName;
-		proxy.appName = appName;
+		proxy.setUserName(userName);
+		proxy.setAppName(appName);
 		if (internalNetworking) {
-			proxy.port = app.getPort();
+			proxy.setPort(app.getPort());
 		} else {
-			proxy.port = getFreePort();
+			proxy.setPort(getFreePort());
 		}
-		launchingProxies.add(proxy);
+		//launchingProxies.add(proxy);
+		int key = proxy.hashCode();
+		launchingProxiesMap.putIfAbsent(key,proxy);
 		
 		String kubeNamespace = Optional.ofNullable(app.getKubernetesNamespace()).orElse("default");
 
@@ -437,12 +647,12 @@ public class DockerService {
 				hostURL = new URL(hostURLString);
 				containerProtocolDefault = hostURL.getProtocol();
 			}
-			proxy.protocol = environment.getProperty("shiny.proxy.docker.container-protocol", containerProtocolDefault);
+			proxy.setProtocol(environment.getProperty("shiny.proxy.docker.container-protocol", containerProtocolDefault));
 
 			if (generateName) {
 				byte[] nameBytes = new byte[20];
 				rng.nextBytes(nameBytes);
-				proxy.name = Hex.encodeHexString(nameBytes);
+				proxy.setName(Hex.encodeHexString(nameBytes));
 			}
 
 			if (kubernetes) {
@@ -471,7 +681,7 @@ public class DockerService {
 
 				ContainerPortBuilder containerPortBuilder = new ContainerPortBuilder().withContainerPort(app.getPort());
 				if (!internalNetworking) {
-					containerPortBuilder.withHostPort(proxy.port);
+					containerPortBuilder.withHostPort(proxy.getPort());
 				}
 
 				List<EnvVar> envVars = new ArrayList<>();
@@ -522,7 +732,7 @@ public class DockerService {
 						.withApiVersion("v1")
 						.withKind("Pod")
 						.withNewMetadata()
-						.withName(proxy.name)
+						.withName(proxy.getName())
 						.endMetadata()
 						.withNewSpec()
 						.withContainers(Collections.singletonList(containerBuilder.build()))
@@ -534,24 +744,25 @@ public class DockerService {
 						.done();
 
 				try {
-					proxy.kubePod = pod = kubeClient.resource(pod).waitUntilReady(
+					 pod = kubeClient.resource(pod).waitUntilReady(
 							Integer.parseInt(environment.getProperty("shiny.proxy.container-wait-time", "20000")),
 							TimeUnit.MILLISECONDS);
-					log.info("pod created successfully   " + proxy.name);
+					proxy.setKubePod(pod);
+					log.info("pod created successfully   " + proxy.getName());
 				}
 				catch (Exception e){
 					try {
 						kubeClient.pods().delete(pod);
 					}catch(Exception e1)
 					{
-						log.error("failed to delete pod  " + proxy.name);
+						log.error("failed to delete pod  " + proxy.getName());
 					}
 					throw e;
 				}
 				if (internalNetworking) {
-					proxy.host = pod.getStatus().getPodIP();
+					proxy.setHost(pod.getStatus().getPodIP());
 				} else {
-					proxy.host = pod.getStatus().getHostIP();
+					proxy.setHost(pod.getStatus().getHostIP());
 				}
 			} else if (swarmMode) {
 				Mount[] mounts = getBindVolumes(app).stream()
@@ -574,42 +785,42 @@ public class DockerService {
 
 				ServiceSpec.Builder serviceSpecBuilder = ServiceSpec.builder()
 						.networks(networks)
-						.name(proxy.name)
+						.name(proxy.getName())
 						.taskTemplate(TaskSpec.builder()
 								.containerSpec(containerSpec)
 								.build());
 				if (!internalNetworking) {
 					serviceSpecBuilder.endpointSpec(EndpointSpec.builder()
-							.ports(PortConfig.builder().publishedPort(proxy.port).targetPort(app.getPort()).build())
+							.ports(PortConfig.builder().publishedPort(proxy.getPort()).targetPort(app.getPort()).build())
 							.build());
 				}
 
-				proxy.serviceId = dockerClient.createService(serviceSpecBuilder.build()).id();
+				proxy.setServiceId(dockerClient.createService(serviceSpecBuilder.build()).id());
 
 				boolean containerFound = retry(i -> {
 					try {
 						Task serviceTask = dockerClient
-							.listTasks(Task.Criteria.builder().serviceName(proxy.name).build())
+							.listTasks(Task.Criteria.builder().serviceName(proxy.getName()).build())
 							.stream().findAny().orElseThrow(() -> new IllegalStateException("Swarm service has no tasks"));
-						proxy.containerId = serviceTask.status().containerStatus().containerId();
-						proxy.host = serviceTask.nodeId();
+						proxy.setContainerId(serviceTask.status().containerStatus().containerId());
+						proxy.setHost(serviceTask.nodeId());
 					} catch (Exception e) {
 						throw new RuntimeException("Failed to inspect swarm service tasks");
 					}
-					return (proxy.containerId != null);
+					return (proxy.getContainerId() != null);
 				}, 10, 2000);
 				if (!containerFound) throw new IllegalStateException("Swarm container did not start in time");
 				
 				if (internalNetworking) {
-					proxy.host = proxy.name;
+					proxy.setHost(proxy.getName());
 				} else {
 					Node node = dockerClient.listNodes().stream()
-							.filter(n -> n.id().equals(proxy.host)).findAny()
-							.orElseThrow(() -> new IllegalStateException(String.format("Swarm node not found [id: %s]", proxy.host)));
-					proxy.host = node.description().hostname();
+							.filter(n -> n.id().equals(proxy.getHost())).findAny()
+							.orElseThrow(() -> new IllegalStateException(String.format("Swarm node not found [id: %s]", proxy.getHost())));
+					proxy.setHost(node.description().hostname());
 				}
 				
-				log.info(String.format("Container running in swarm [service: %s] [node: %s]", proxy.name, proxy.host));
+				log.info(String.format("Container running in swarm [service: %s] [node: %s]", proxy.getName(), proxy.getHost()));
 			} else {
 				Builder hostConfigBuilder = HostConfig.builder();
 				
@@ -620,7 +831,7 @@ public class DockerService {
 				if (internalNetworking) {
 					portBindings = Collections.emptyList();
 				} else {
-					portBindings = Collections.singletonList(PortBinding.of("0.0.0.0", proxy.port));
+					portBindings = Collections.singletonList(PortBinding.of("0.0.0.0", proxy.getPort()));
 				}
 				hostConfigBuilder
 						.portBindings(Collections.singletonMap(app.getPort().toString(), portBindings))
@@ -641,44 +852,48 @@ public class DockerService {
 						dockerClient.connectToNetwork(container.id(), networkConnection);
 					}
 				}
-				if (proxy.name != null) {
-					dockerClient.renameContainer(container.id(), proxy.name);
+				if (proxy.getName() != null) {
+					dockerClient.renameContainer(container.id(), proxy.getName());
 				}
 				dockerClient.startContainer(container.id());
 				
 				ContainerInfo info = dockerClient.inspectContainer(container.id());
-				if (proxy.name == null) {
-					proxy.name = info.name().substring(1);
+				if (proxy.getName() == null) {
+					proxy.setName(info.name().substring(1));
 				}
 				if (internalNetworking) {
-					proxy.host = proxy.name;
+					proxy.setHost(proxy.getName());
 				} else {
-					proxy.host = hostURL.getHost();
+					proxy.setHost(hostURL.getHost());
 				}
-				proxy.containerId = container.id();
+				proxy.setContainerId(container.id());
 			}
 
-			proxy.startupTimestamp = System.currentTimeMillis();
+			proxy.setStartupTimestamp( System.currentTimeMillis());
 		} catch (Exception e) {
 			if (!internalNetworking) {
-				releasePort(proxy.port);
+				releasePort(proxy.getPort());
 			}
-			launchingProxies.remove(proxy);
+		//	launchingProxies.remove(proxy);
+		//	removeLaunchingProxy(proxy);
+			launchingProxiesMap.remove(proxy.hashCode());
 			throw new ShinyProxyException("Failed to start container: " + e.getMessage(), e);
 		}
 
 
 		if (!testProxy(proxy)) {
 			releaseProxy(proxy, true);
-			launchingProxies.remove(proxy);
+		//	launchingProxies.remove(proxy);
+		//	removeLaunchingProxy(proxy);
+			launchingProxiesMap.remove(proxy.hashCode());
 			throw new ShinyProxyException("Container did not respond in time");
 		}
 		
 		try {
-			URI target = new URI(String.format("%s://%s:%d", proxy.protocol, proxy.host, proxy.port));
+			URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
 			synchronized (mappingListeners) {
 				for (MappingListener listener: mappingListeners) {
-					listener.mappingAdded(proxy.name, target);
+					listener.mappingAdded(proxy.getName(), target);
 				}
 			}
 		} catch (URISyntaxException ignore) {}
@@ -686,32 +901,66 @@ public class DockerService {
 		if (logService.isContainerLoggingEnabled()) {
 			try {
 				if (kubernetes) {
-					LogWatch watcher = kubeClient.pods().inNamespace(kubeNamespace).withName(proxy.name).watchLog();
+					LogWatch watcher = kubeClient.pods().inNamespace(kubeNamespace).withName(proxy.getName()).watchLog();
 					logService.attachLogWatcher(proxy, watcher);
 				} else {
 					LogStream logStream;
-					logStream = dockerClient.logs(proxy.containerId, LogsParam.follow(), LogsParam.stdout(), LogsParam.stderr());
+					logStream = dockerClient.logs(proxy.getContainerId(), LogsParam.follow(), LogsParam.stdout(), LogsParam.stderr());
 					logService.attachLogWriter(proxy, logStream);
 				}
 			} catch (DockerException e) {
-				log.error("Failed to attach to container log " + proxy.containerId, e);
+				log.error("Failed to attach to container log " + proxy.getContainerId(), e);
 			} catch (InterruptedException e) {
-				log.error("Interrupted while attaching to container log " + proxy.containerId, e);
+				log.error("Interrupted while attaching to container log " + proxy.getContainerId(), e);
 			}
 		}
 		
-		activeProxies.add(proxy);
-		launchingProxies.remove(proxy);
-		log.info(String.format("Proxy activated [user: %s] [app: %s] [port: %d]", userName, appName, proxy.port));
+	//	activeProxies.add(proxy);
+		activeProxiesMap.putIfAbsent(proxy.hashCode(),proxy);
+		//launchingProxies.remove(proxy);
+		//launchingProxies.remove(0);
+		//launchingProxies.getPartitionKey()
+		//launchingProxies.removeIf((Proxy p) ->  p.getUserName().equalsIgnoreCase("jack"));
+		launchingProxiesMap.remove(proxy.hashCode());
+		//launchingProxiesMap.remove(proxy.hashCode(),proxy);
+		//removeLaunchingProxy(proxy);
+		log.info(String.format("Proxy activated [user: %s] [app: %s] [port: %d]", userName, appName, proxy.getPort()));
 		eventService.post(EventType.AppStart.toString(), userName, appName);
 		
 		return proxy;
 	}
+
+	/*private void removeLaunchingProxy(Proxy proxy){
+		*//*int cnt=0;
+		for(Proxy p : launchingProxies){
+			System.out.println(p.getUserName());
+			if(p.getUserName().equalsIgnoreCase(proxy.getUserName()) && p.getAppName().equalsIgnoreCase(proxy.getAppName()) && p.getPort()==proxy.getPort()){
+				launchingProxies.re
+				launchingProxies.remove(cnt);
+			}
+			cnt++;
+		}*//*
+
+		*//*Iterator<Proxy> iterator = launchingProxies.iterator();
+		while ( iterator.hasNext() ) {
+			Proxy price = iterator.next();
+			//analyze
+			launchingProxies.remove(price);
+		}*//*
+
+	}*/
 	
 	private Proxy findProxy(String userName, String appName) {
-		synchronized (activeProxies) {
-			for (Proxy proxy: activeProxies) {
-				if (userName.equals(proxy.userName) && appName.equals(proxy.appName)) return proxy;
+		synchronized (activeProxiesMap) {
+			/*for (Proxy proxy: activeProxies) {
+				if (userName.equals(proxy.getUserName()) && appName.equals(proxy.getAppName()))
+					return proxy;
+			}*/
+			Set<Integer> keySet = activeProxiesMap.keySet();
+			for(Integer key : keySet) {
+				if (userName.equals(activeProxiesMap.get(key).getUserName()) && appName
+						.equals(activeProxiesMap.get(key).getAppName()))
+					return activeProxiesMap.get(key);
 			}
 		}
 		return null;
@@ -723,9 +972,11 @@ public class DockerService {
 		int maxTries = totalWaitMs / waitMs;
 		
 		boolean mayProceed = retry(i -> {
-			synchronized (launchingProxies) {
-				for (Proxy proxy: launchingProxies) {
-					if (userName.equals(proxy.userName) && appName.equals(proxy.appName)) {
+			synchronized (launchingProxiesMap) {
+			//	for (Proxy proxy: launchingProxies) {
+				Set<Integer> keys = launchingProxiesMap.keySet();
+				for (Integer o : keys){
+				if (userName.equals(launchingProxiesMap.get(o).getUserName()) && appName.equals(launchingProxiesMap.get(o).getAppName())) {
 						return false;
 					}
 				}
@@ -743,7 +994,7 @@ public class DockerService {
 		int timeoutMs = Integer.parseInt(environment.getProperty("shiny.proxy.container-wait-timeout", "5000"));
 		
 		return retry(i -> {
-			String urlString = String.format("%s://%s:%d", proxy.protocol, proxy.host, proxy.port);
+			String urlString = String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort());
 			try {
 				URL testURL = new URL(urlString);
 				HttpURLConnection connection = ((HttpURLConnection) testURL.openConnection());
@@ -858,7 +1109,7 @@ public class DockerService {
 	public void heartbeatReceived(String user, String app) {
 		Proxy proxy = findProxy(user, app);
 		if (proxy != null) {
-			proxy.lastHeartbeatTimestamp = System.currentTimeMillis();
+			proxy.setLastHeartbeatTimestamp(System.currentTimeMillis());
 		}
 	}
 
@@ -873,23 +1124,26 @@ public class DockerService {
 
 					List<Proxy> proxiesToRemove = new ArrayList<>();
 					long currentTimestamp = System.currentTimeMillis();
-					synchronized (activeProxies) {
-						for (Proxy proxy: activeProxies) {
-							Long lastHeartbeat = proxy.lastHeartbeatTimestamp;
-							if (lastHeartbeat == null) lastHeartbeat = proxy.startupTimestamp;
+					synchronized (activeProxiesMap) {
+						Set<Integer> keySet = activeProxiesMap.keySet();
+						for(Integer key : keySet){
+							Proxy proxy = activeProxiesMap.get(key);
+						//for (Proxy proxy: activeProxies) {
+							Long lastHeartbeat = proxy.getLastHeartbeatTimestamp();
+							if (lastHeartbeat == null) lastHeartbeat = proxy.getStartupTimestamp();
 							long proxySilence = currentTimestamp - lastHeartbeat;
-							log.info("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence  " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
-							System.out.println("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
+							log.info("In AppCleaner ... containerId " + proxy.getContainerId() + "name " +proxy.getName() + "proxySilence  " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
+							System.out.println("In AppCleaner ... containerId " + proxy.getContainerId() + "name " +proxy.getName() + "proxySilence " + proxySilence + "heartbeatTimeout = " +heartbeatTimeout);
 								if (proxySilence > heartbeatTimeout) {
-								log.info("In AppCleaner ... containerId " + proxy.containerId + "name " +proxy.name + "proxySilence " + proxySilence + " heartbeatTimeout " + heartbeatTimeout);
-								log.info(String.format("Releasing inactive proxy [user: %s] [app: %s] [silence: %dms]", proxy.userName, proxy.appName, proxySilence));
+								log.info("In AppCleaner ... containerId " + proxy.getContainerId() + "name " +proxy.getName() + "proxySilence " + proxySilence + " heartbeatTimeout " + heartbeatTimeout);
+								log.info(String.format("Releasing inactive proxy [user: %s] [app: %s] [silence: %dms]", proxy.getUserName(), proxy.getAppName(), proxySilence));
 								proxiesToRemove.add(proxy);
 							}
 						}
 					}
 					for (Proxy proxy: proxiesToRemove) {
 						releaseProxy(proxy, true);
-						log.info(String.format("Releasing inactive proxy [user: %s] [app: %s]", proxy.userName, proxy.appName));
+						log.info(String.format("Releasing inactive proxy [user: %s] [app: %s]", proxy.getUserName(), proxy.getAppName()));
 					}
 				} catch (Throwable t) {
 					log.error("Error in HeartbeatThread", t);

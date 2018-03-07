@@ -20,10 +20,13 @@
  */
 package eu.openanalytics;
 
+import eu.openanalytics.auth.AuthenticationTypeProxy;
+import eu.openanalytics.auth.LogoutHandler;
+import eu.openanalytics.services.AppService;
+import eu.openanalytics.services.AppService.ShinyApp;
+import eu.openanalytics.services.UserService;
 import java.util.Arrays;
-
 import javax.inject.Inject;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
@@ -35,12 +38,6 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import eu.openanalytics.auth.AuthenticationTypeProxy;
-import eu.openanalytics.auth.LogoutHandler;
-import eu.openanalytics.services.AppService;
-import eu.openanalytics.services.AppService.ShinyApp;
-import eu.openanalytics.services.UserService;
 
 @Configuration
 @EnableWebSecurity
@@ -78,7 +75,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		if (authType.get().hasAuthorization()) {
 			// Limit access to the app pages
-			http.authorizeRequests().antMatchers("/login", "/signin/**", "/signup").permitAll();
+			http.authorizeRequests().antMatchers("/login", "/signin/**", "/signup","/p").permitAll();
 			for (ShinyApp app: appService.getApps()) {
 				if (app.getGroups() == null || app.getGroups().length == 0) continue;
 				String[] appGroups = Arrays.stream(app.getGroups()).map(s -> s.toUpperCase()).toArray(i -> new String[i]);

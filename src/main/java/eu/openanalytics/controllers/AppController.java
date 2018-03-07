@@ -89,5 +89,13 @@ public class AppController extends BaseController {
 		return "app";
 	}
 
+	@RequestMapping(value="/hcapple", method=RequestMethod.GET)
+	private String hazelcastApple() {
+
+		System.out.println("in get");
+		dockerService.addAndRemoveappleApple();
+		return "app";
+	}
+
 
 }

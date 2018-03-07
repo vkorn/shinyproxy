@@ -27,5 +27,14 @@ public class HazelcastConfiguration {
 
     return config;
   }
+  /*@Bean
+  public WebFilter webFilter(HazelcastInstance hazelcastInstance) {
+
+    Properties properties = new Properties();
+    properties.put("instance-name", hazelcastInstance.getName());
+    properties.put("sticky-session", "false");
+
+    return new WebFilter(properties);
+  }*/
 
 }

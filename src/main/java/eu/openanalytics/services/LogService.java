@@ -97,11 +97,11 @@ public class LogService {
 		if (!isContainerLoggingEnabled()) return;
 		executor.submit(() -> {
 			try {
-				Path[] paths = getLogFilePaths(proxy.containerId);
+				Path[] paths = getLogFilePaths(proxy.getContainerId());
 				// Note that this call will block until the container is stopped.
 				logStream.attach(new FileOutputStream(paths[0].toFile()), new FileOutputStream(paths[1].toFile()));
 			} catch (IOException e) {
-				log.error("Failed to attach logging of container " + proxy.containerId, e);
+				log.error("Failed to attach logging of container " + proxy.getContainerId(), e);
 			}
 		});
 	}
@@ -113,11 +113,11 @@ public class LogService {
 				byte[] logIdBytes = new byte[20];
 				rng.nextBytes(logIdBytes);
 				String logId = Hex.toHexString(logIdBytes);
-				log.info(String.format("Assigning container %s log file id %s", proxy.name, logId));
+				log.info(String.format("Assigning container %s log file id %s", proxy.getName(), logId));
 				// Note that this call will block until the container is stopped.
 				IOUtils.copy(watcher.getOutput(), new FileOutputStream(Paths.get(containerPath, logId + ".log").toFile()));
 			} catch (IOException e) {
-				log.error("Failed to attach logging of container " + proxy.containerId, e);
+				log.error("Failed to attach logging of container " + proxy.getContainerId(), e);
 			}
 		});
 	}
@@ -154,13 +154,13 @@ public class LogService {
 			if (isContainerLoggingEnabled()) {
 				Proxy activeProxy = null;
 				for (Proxy proxy: dockerService.listProxies()) {
-					if (proxy.userName.equals(form.getUserName()) && proxy.appName.equals(form.getAppName())) {
+					if (proxy.getUserName().equals(form.getUserName()) && proxy.getAppName().equals(form.getAppName())) {
 						activeProxy = proxy;
 						break;
 					}
 				}
 				if (activeProxy != null) {
-					Path[] filePaths = getLogFilePaths(activeProxy.containerId);
+					Path[] filePaths = getLogFilePaths(activeProxy.getContainerId());
 					for (Path p: filePaths) {
 						if (Files.exists(p)) helper.addAttachment(p.toFile().getName(), p.toFile());
 					}
