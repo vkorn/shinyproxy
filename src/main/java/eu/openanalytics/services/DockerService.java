@@ -112,12 +112,13 @@ public class DockerService {
 
 	private Logger log = Logger.getLogger(DockerService.class);
 	private Random rng = new Random();
-
-/*	private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
+/*
+	private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
 	private List<Proxy> activeProxies = Collections.synchronizedList(new ArrayList<>());*/
 
 	private List<Proxy> launchingProxies = Collections.synchronizedList(hz.getList("launchingProxies"));
 	private List<Proxy> activeProxies = Collections.synchronizedList(hz.getList("activeProxies"));
+	private Map<String,String> activeProxySessionId = Collections.synchronizedMap(hz.getMap("activeProxySessionId"));
 	
 
 	private List<MappingListener> mappingListeners = Collections.synchronizedList(new ArrayList<>());
@@ -299,7 +300,8 @@ public class DockerService {
 		if (proxy == null) {
 			return null;
 		} else {
-			proxy.sessionIds.add(getCurrentSessionId(request));
+			//proxy.sessionIds.add(getCurrentSessionId(request));
+			activeProxySessionId.put(proxy.name,getCurrentSessionId(request));
 			return proxy.name;
 		}
 	}
@@ -310,14 +312,16 @@ public class DockerService {
 		String proxyName = exchange.getRelativePath();
 		synchronized (activeProxies) {
 			for (Proxy p: activeProxies) {
-				if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name)) {
+				//if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name))
+				if (activeProxySessionId.get(p.name).equalsIgnoreCase(sessionId) && proxyName.startsWith("/" + p.name)){
 					return true;
 				}
 			}
 		}
 		synchronized (launchingProxies) {
 			for (Proxy p: launchingProxies) {
-				if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name)) {
+			//	if (p.sessionIds.contains(sessionId) && proxyName.startsWith("/" + p.name)) {
+				if (activeProxySessionId.get(p.name).equalsIgnoreCase(sessionId) && proxyName.startsWith("/" + p.name)){
 					return true;
 				}
 			}

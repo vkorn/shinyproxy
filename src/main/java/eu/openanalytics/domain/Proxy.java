@@ -7,6 +7,7 @@ import java.util.Set;
 
 public  class Proxy implements Serializable {
 
+  //private HazelcastInstance hz = Hazelcast.newHazelcastInstance();
   public String name;
   public String protocol;
   public String host;
@@ -15,7 +16,8 @@ public  class Proxy implements Serializable {
   public String serviceId;
   public String userName;
   public String appName;
-  public Set<String> sessionIds = new HashSet<>();
+ // public Set<String> sessionIds = hz.getSet("sessionIds");
+ public Set<String> sessionIds = new HashSet<>();
   public long startupTimestamp;
   public Long lastHeartbeatTimestamp;
   public Pod kubePod;
@@ -34,7 +36,7 @@ public  class Proxy implements Serializable {
     target.serviceId = this.serviceId;
     target.userName = this.userName;
     target.appName = this.appName;
-    target.sessionIds = this.sessionIds;
+   // target.sessionIds = this.sessionIds;
     target.startupTimestamp = this.startupTimestamp;
     return target;
   }
