@@ -37,6 +37,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
@@ -57,7 +58,10 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication(exclude = { HazelcastAutoConfiguration.class })
 public class ShinyProxyApplication {
 
-	@Inject
+	@Autowired
+	HazelcastConfiguration hazelcastConfiguration;
+
+	@Autowired
 	DockerService dockerService;
 
 	@Inject
