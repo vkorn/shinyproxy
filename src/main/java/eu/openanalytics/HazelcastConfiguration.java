@@ -47,16 +47,9 @@ public class HazelcastConfiguration {
   public HazelcastInstance getHazelcastClientInstance() throws IOException {
     ClientConfig clientConfig = new ClientConfig();
     ClientNetworkConfig network = clientConfig.getNetworkConfig();
-    network.addAddress(environment.getProperty("shiny.proxy.hazelcast.server"));
-   // network.addAddress("192.168.0.210:5701");
-   /* network.setPort(5701).setPortCount(20);
-    network.setPortAutoIncrement(true);*/
-   /* JoinConfig join = network.();
-    join.getMulticastConfig().setEnabled(true);
-    join.getTcpIpConfig()
-        *//*.addMember("machine1")*//*
-        .addMember("192.168.0.210").setEnabled(false);*/
-    //   clientConfig = new XmlClientConfigBuilder("hazelcast-client-dev.xml").build();
+    String hosts = environment.getProperty("shiny.proxy.hazelcast.server");
+    String[] split = hosts.split(",");
+    network.addAddress(split);
     HazelcastInstance hazelcastInstance=  HazelcastClient.newHazelcastClient(clientConfig);
     return hazelcastInstance;
   }
@@ -65,7 +58,9 @@ public class HazelcastConfiguration {
   public ClientConfig getHazelcastClientConfig() throws IOException {
     ClientConfig clientConfig = new ClientConfig();
     ClientNetworkConfig network = clientConfig.getNetworkConfig();
-    network.addAddress(environment.getProperty("shiny.proxy.hazelcast.server")).setConnectionTimeout(1000);;
+    String hosts = environment.getProperty("shiny.proxy.hazelcast.server");
+    String[] split = hosts.split(",");
+    network.addAddress(split).setConnectionTimeout(1000);;
 
     return clientConfig;
   }
