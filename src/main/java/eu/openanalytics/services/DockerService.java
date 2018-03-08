@@ -118,7 +118,7 @@ public class DockerService {
     private ClientConfig clientConfig;
     /*@Autowired
     private HazelcastInstance hz = Hazelcast.newHazelcastInstance();*/
-    @Autowired
+    
     private HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
     private Logger log = Logger.getLogger(DockerService.class);

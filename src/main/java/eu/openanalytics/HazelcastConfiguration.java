@@ -43,22 +43,13 @@ public class HazelcastConfiguration {
   }*/
 //shiny:
 //  proxy:
-  @Bean
-  public HazelcastInstance getHazelcastClientInstance() throws IOException {
-    ClientConfig clientConfig = new ClientConfig();
-    ClientNetworkConfig network = clientConfig.getNetworkConfig();
-    String hosts = environment.getProperty("shiny.proxy.hazelcast.server");
-    String[] split = hosts.split(",");
-    network.addAddress(split);
-    HazelcastInstance hazelcastInstance=  HazelcastClient.newHazelcastClient(clientConfig);
-    return hazelcastInstance;
-  }
 
   @Bean
   public ClientConfig getHazelcastClientConfig() throws IOException {
     ClientConfig clientConfig = new ClientConfig();
     ClientNetworkConfig network = clientConfig.getNetworkConfig();
     String hosts = environment.getProperty("shiny.proxy.hazelcast.server");
+      System.out.println("HZ Got hosts: " + hosts);
     String[] split = hosts.split(",");
     network.addAddress(split).setConnectionTimeout(1000);;
 
