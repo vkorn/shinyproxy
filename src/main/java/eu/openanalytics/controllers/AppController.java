@@ -20,18 +20,16 @@
  */
 package eu.openanalytics.controllers;
 
+import eu.openanalytics.ShinyProxyApplication;
+import eu.openanalytics.services.AppService;
+import eu.openanalytics.services.DockerService;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import eu.openanalytics.ShinyProxyApplication;
-import eu.openanalytics.services.AppService;
-import eu.openanalytics.services.DockerService;
 
 @Controller
 public class AppController extends BaseController {
@@ -74,4 +72,30 @@ public class AppController extends BaseController {
 		String containerPath = contextPath + "/" + mapping + environment.getProperty("shiny.proxy.landing-page") + queryString;
 		return containerPath;
 	}
+
+	@RequestMapping(value="/hcput", method=RequestMethod.GET)
+	private String hazelcastPut() {
+
+		dockerService.addElementToList();
+    System.out.println("in put");
+		return "app";
+	}
+
+	@RequestMapping(value="/hcget", method=RequestMethod.GET)
+	private String hazelcastget() {
+
+    System.out.println("in get");
+    dockerService.getElement();
+		return "app";
+	}
+
+	@RequestMapping(value="/hcapple", method=RequestMethod.GET)
+	private String hazelcastApple() {
+
+		System.out.println("in get");
+		dockerService.addAndRemoveappleApple();
+		return "app";
+	}
+
+
 }

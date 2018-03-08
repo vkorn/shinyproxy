@@ -20,25 +20,6 @@
  */
 package eu.openanalytics;
 
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import javax.inject.Inject;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded.PortInUseException;
-import org.springframework.boot.context.embedded.undertow.UndertowDeploymentInfoCustomizer;
-import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.scheduling.annotation.EnableAsync;
-
 import eu.openanalytics.services.DockerService;
 import eu.openanalytics.services.DockerService.MappingListener;
 import io.undertow.server.HandlerWrapper;
@@ -50,12 +31,30 @@ import io.undertow.server.handlers.proxy.LoadBalancingProxyClient;
 import io.undertow.server.handlers.proxy.ProxyHandler;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.util.PathMatcher;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import javax.inject.Inject;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.PortInUseException;
+import org.springframework.boot.context.embedded.undertow.UndertowDeploymentInfoCustomizer;
+import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableAsync;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@SpringBootApplication
+
 @EnableAsync
 @Configuration
 @EnableSwagger2
+@SpringBootApplication(exclude = { HazelcastAutoConfiguration.class })
 public class ShinyProxyApplication {
 
 	@Inject
@@ -63,6 +62,7 @@ public class ShinyProxyApplication {
 
 	@Inject
 	Environment environment;
+
 
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(ShinyProxyApplication.class);

@@ -20,14 +20,15 @@
  */
 package eu.openanalytics.controllers;
 
+import eu.openanalytics.services.DockerService;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-
+import javax.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import eu.openanalytics.services.DockerService;
 
 @Controller
 public class AdminController extends BaseController {
@@ -35,10 +36,27 @@ public class AdminController extends BaseController {
 	@Inject
 	DockerService dockerService;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
 	@RequestMapping("/admin")
 	String admin(ModelMap map, HttpServletRequest request) {
 		prepareMap(map, request);
 		map.put("proxies", dockerService.listProxies());
 		return "admin";
+	}
+
+	@RequestMapping(value = "/p")
+	public String index(HttpSession httpSession) {
+
+		Integer hits = (Integer) httpSession.getAttribute("hits");
+
+		LOGGER.info("index() called, hits was '{}', session id '{}'", hits, httpSession.getId());
+
+		if (hits == null) {
+			hits = 0;
+		}
+
+		httpSession.setAttribute("hits", ++hits);
+
+		return "index";
 	}
 }
