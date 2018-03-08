@@ -4,7 +4,6 @@ import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,10 +29,10 @@ public class HazelcastConfiguration {
   public String hcHosts() throws YamlException, FileNotFoundException {
 
 
-    ClassLoader classLoader = getClass().getClassLoader();
-    File file = new File(classLoader.getResource(System.getProperty("config.file","/home/kaiser/application.yaml")).getFile());
+   /* ClassLoader classLoader = getClass().getClassLoader();
+    File file = new File(classLoader.getResource(System.getProperty("config.file","/home/kaiser/application.yaml")).getFile());*/
 ///Users/kpsoi/IdeaProjects/shinyproxykubernetes/src/main/java/eu/openanalytics/HazelcastConfiguration.java
-    YamlReader reader = new YamlReader(new FileReader(file));
+    YamlReader reader = new YamlReader(new FileReader(System.getProperty("config.file","/home/kaiser/application.yaml")));
     Object object = reader.read();
     Map map = (Map)object;
     Map shiny = (Map)map.get("shiny");
