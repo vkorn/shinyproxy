@@ -20,8 +20,10 @@
  */
 package eu.openanalytics.services;
 
+import com.esotericsoftware.yamlbeans.YamlException;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
@@ -49,6 +51,7 @@ import com.spotify.docker.client.messages.swarm.PortConfig;
 import com.spotify.docker.client.messages.swarm.ServiceSpec;
 import com.spotify.docker.client.messages.swarm.Task;
 import com.spotify.docker.client.messages.swarm.TaskSpec;
+import eu.openanalytics.HazelcastConfiguration;
 import eu.openanalytics.ShinyProxyException;
 import eu.openanalytics.domain.Apple;
 import eu.openanalytics.domain.Proxy;
@@ -72,6 +75,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -102,57 +106,67 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.WebUtils;
 
 @Service
+@Component
 public class DockerService {
 
-	@Autowired
-	private ClientConfig clientConfig;
+/*	@Autowired
+	private ClientConfig clientConfig;*/
 	/*@Autowired
     private HazelcastInstance hz = Hazelcast.newHazelcastInstance();*/
-	@Autowired
-	private HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
+	/*@Autowired*/
+	private HazelcastInstance hz ;
+
+	private ConcurrentMap<Integer, Proxy> launchingProxiesMap ;
+	private ConcurrentMap<Integer, Proxy> activeProxiesMap;
+	private IList<Apple> launchingApple;
+	private IList<Apple> activeApple;
+	private Map<String,String> activeProxySessionId ;
+
+	private Set<Integer> occupiedPorts;
+
+
+	public  DockerService(){
+		ClientConfig clientConfig1 = new ClientConfig();
+		System.out.println("in docker service client config");
+		ClientNetworkConfig network = clientConfig1.getNetworkConfig();
+		String hosts = null;
+		try {
+			hosts = new HazelcastConfiguration().hcHosts();
+		} catch (YamlException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		String[] split = hosts.split(",");
+		network.addAddress(split).setConnectionTimeout(1000);;
+		clientConfig1.getNetworkConfig().setSmartRouting(true);
+		hz = HazelcastClient.newHazelcastClient(clientConfig1);
+
+
+	launchingProxiesMap = hz.getMap("launchingProxiesMap");
+	activeProxiesMap = hz.getMap("activeProxiesMap");
+	launchingApple = hz.getList("launchingApple");
+	activeApple= hz.getList("activeApple");
+	activeProxySessionId = Collections.synchronizedMap(hz.getMap("activeProxySessionId"));
+	occupiedPorts = Collections.synchronizedSet(hz.getSet("occupiedPorts"));
+
+	}
+	private List<MappingListener> mappingListeners = Collections.synchronizedList(new ArrayList<>());
 
 	private Logger log = Logger.getLogger(DockerService.class);
 	private Random rng = new Random();
-	/*private List<Proxy> launchingProxies = Collections.synchronizedList(new ArrayList<>());
-	private List<Proxy> activeProxies = Collections.synchronizedList(new ArrayList<>());*/
-
-	//private ICollection<Proxy> launchingProxies = hz.getSet("launchingProxies");
-
-	private ConcurrentMap<Integer, Proxy> launchingProxiesMap = hz.getMap("launchingProxiesMap");
-	private ConcurrentMap<Integer, Proxy> activeProxiesMap = hz.getMap("activeProxiesMap");
 
 
-	//private IList<Proxy> activeProxies = hz.getList("activeProxies");
-
-	private IList<Apple> launchingApple = hz.getList("launchingApple");
-	private IList<Apple> activeApple= hz.getList("activeApple");
-	private Map<String,String> activeProxySessionId = Collections.synchronizedMap(hz.getMap("activeProxySessionId"));
-	
-
-	private List<MappingListener> mappingListeners = Collections.synchronizedList(new ArrayList<>());
-
-/*	private List<MappingListener> mappingListeners = Collections.synchronizedList(hz.getList("mappingListeners"));*/
-	/*private Set<Integer> occupiedPorts = Collections.synchronizedSet(new HashSet<>());*/
-	private Set<Integer> occupiedPorts = Collections.synchronizedSet(hz.getSet("occupiedPorts"));
 
 
-	/*private List<String> launchingProxies1 = Collections.synchronizedList(hz.getList("launchingProxies1"));
-	private List<Proxy> launchingProxies2 = Collections.synchronizedList(new ArrayList<>());
-	private List<MappingListener> mappingListeners1 = Collections.synchronizedList(new ArrayList<>());*/
-
-	/*private List<Proxy> launchingProxies = Collections.synchronizedList(hz.getList("launchingProxies"));
-	private List<Proxy> activeProxies = Collections.synchronizedList(Hazelcast.newHazelcastInstance().getList("activeProxies"));*/
-
-	/*private List<MappingListener> mappingListeners = Collections.synchronizedList(hz.getList("mappingListeners"));
-	private Set<Integer> occupiedPorts = Collections.synchronizedSet(hz.getSet("occupiedPorts"));*/
 
 	private ExecutorService containerKiller = Executors.newSingleThreadExecutor();
 	
