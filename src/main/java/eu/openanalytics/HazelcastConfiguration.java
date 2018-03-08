@@ -1,23 +1,48 @@
 package eu.openanalytics;
 
-import com.hazelcast.client.HazelcastClient;
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientNetworkConfig;
-import com.hazelcast.core.HazelcastInstance;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Map;
 import javax.inject.Inject;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
 //import com.hazelcast.web.WebFilter;
 
 @Configuration
+@EnableAutoConfiguration
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 public class HazelcastConfiguration {
 
   @Inject
   Environment environment;
 
+  public String hcHosts() throws YamlException, FileNotFoundException {
+
+
+    ClassLoader classLoader = getClass().getClassLoader();
+    File file = new File(classLoader.getResource(System.getProperty("config.file","/home/kaiser/application.yaml")).getFile());
+///Users/kpsoi/IdeaProjects/shinyproxykubernetes/src/main/java/eu/openanalytics/HazelcastConfiguration.java
+    YamlReader reader = new YamlReader(new FileReader(file));
+    Object object = reader.read();
+    Map map = (Map)object;
+    Map shiny = (Map)map.get("shiny");
+    Map proxy = (Map)shiny.get("proxy");
+    Map hazelcast = (Map)proxy.get("hazelcast");
+    String server = (String)hazelcast.get("server");
+
+    return server;
+  }
  /* @Bean
   public HazelcastInstance hazelcastInstance() {
     return Hazelcast.newHazelcastInstance();
@@ -43,7 +68,7 @@ public class HazelcastConfiguration {
   }*/
 //shiny:
 //  proxy:
-  @Bean
+/*  @Bean
   public HazelcastInstance getHazelcastClientInstance() throws IOException {
     ClientConfig clientConfig = new ClientConfig();
     ClientNetworkConfig network = clientConfig.getNetworkConfig();
@@ -52,16 +77,17 @@ public class HazelcastConfiguration {
     network.addAddress(split);
     HazelcastInstance hazelcastInstance=  HazelcastClient.newHazelcastClient(clientConfig);
     return hazelcastInstance;
-  }
+  }*/
 
   @Bean
   public ClientConfig getHazelcastClientConfig() throws IOException {
     ClientConfig clientConfig = new ClientConfig();
+    System.out.println("in client config");
     ClientNetworkConfig network = clientConfig.getNetworkConfig();
-    String hosts = environment.getProperty("shiny.proxy.hazelcast.server");
+    String hosts = hcHosts();/*environment.getProperty("shiny.proxy.hazelcast.server");*/
     String[] split = hosts.split(",");
     network.addAddress(split).setConnectionTimeout(1000);;
-
+    clientConfig.getNetworkConfig().setSmartRouting(true);
     return clientConfig;
   }
 
