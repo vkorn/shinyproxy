@@ -1,6 +1,8 @@
 server:
   session:
     timeout: 800000
+    cookie:
+      name: JSESSIONID
 shiny:
   proxy:
     title: Open Analytics Shiny Proxy
@@ -13,10 +15,12 @@ shiny:
     port: 8080
     authentication: simple
     admin-groups: scientists
+    hazelcast:
+      server: 192.168.0.210:5701
     # Example: 'simple' authentication configuration
     users:
-    - name: jack
-      password: password
+    - name: j
+      password: p
       groups: scientists
     - name: jeff
       password: password

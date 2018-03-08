@@ -65,6 +65,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 			.ignoring().antMatchers("/webjars/**");
 	}
 
+	/*@Bean
+	public SessionRegistry sessionRegistry() {
+		return new SessionRegistryImpl();
+	}*/
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
@@ -73,9 +77,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 			// disable X-Frame-Options
 			.headers().frameOptions().disable();
 
+/*		http
+				.sessionManagement()
+				.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+				.sessionFixation()
+				.migrateSession()
+				.maximumSessions(10)
+				.sessionRegistry(sessionRegistry());*/
+
 		if (authType.get().hasAuthorization()) {
 			// Limit access to the app pages
-			http.authorizeRequests().antMatchers("/login", "/signin/**", "/signup","/p").permitAll();
+			http.authorizeRequests().antMatchers("/login", "/signin/**", "/signup").permitAll();
 			for (ShinyApp app: appService.getApps()) {
 				if (app.getGroups() == null || app.getGroups().length == 0) continue;
 				String[] appGroups = Arrays.stream(app.getGroups()).map(s -> s.toUpperCase()).toArray(i -> new String[i]);

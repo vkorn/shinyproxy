@@ -20,6 +20,8 @@
  */
 package eu.openanalytics.services;
 
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
@@ -100,6 +102,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.env.Environment;
@@ -109,8 +112,12 @@ import org.springframework.web.util.WebUtils;
 @Service
 public class DockerService {
 
-
-	private HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+	@Autowired
+	private ClientConfig clientConfig;
+	/*@Autowired
+    private HazelcastInstance hz = Hazelcast.newHazelcastInstance();*/
+	@Autowired
+	private HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
 	private Logger log = Logger.getLogger(DockerService.class);
 	private Random rng = new Random();
@@ -425,7 +432,7 @@ public class DockerService {
 		} catch (DockerException | InterruptedException e) {}
 		log.info(String.format("Swarm mode is %s", (swarmMode ? "enabled" : "disabled")));
 
-    //startCleanUpThread();
+    startCleanUpThread();
 	}
 
 	private void startCleanUpThread(){
