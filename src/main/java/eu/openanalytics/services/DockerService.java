@@ -94,7 +94,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Hex;
@@ -481,7 +480,7 @@ public class DockerService {
     heartbeatThread.start();
   }
 
-	@PreDestroy
+	/*@PreDestroy
 	public void shutdown() {
 		containerKiller.shutdown();
 		List<Proxy> proxiesToRelease = new ArrayList<>();
@@ -491,7 +490,7 @@ public class DockerService {
 			//proxiesToRelease.addAll(activeProxies);
 		}
 		for (Proxy proxy: proxiesToRelease) releaseProxy(proxy, false);
-	}
+	}*/
 
 	@Bean KubernetesClient getKubeClient() {
 		kubernetes = "true".equals(environment.getProperty("shiny.proxy.docker.kubernetes"));
