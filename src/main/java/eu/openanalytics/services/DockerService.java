@@ -20,7 +20,6 @@
  */
 package eu.openanalytics.services;
 
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
 import com.spotify.docker.client.DefaultDockerClient;
@@ -459,7 +458,6 @@ public class DockerService {
 
 	@PostConstruct
 	public void init() {
-    hz = Hazelcast.newHazelcastInstance();
 
 		if (kubernetes) {
 			log.info("Kubernetes is enabled");

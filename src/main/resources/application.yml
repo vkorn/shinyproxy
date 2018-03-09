@@ -13,10 +13,15 @@ shiny:
     container-wait-time: 120000
     container-wait-timeout: 5000
     port: 8080
-    authentication: simple
+    authentication: keycloak
+    keycloak:
+      realm: master
+      auth-server-url: https://keycloak-dev1.edp-test-kp.com/auth
+      resource: testshiny
+      credentials-secret: e9e48955-766e-44ee-9a4a-ebae411d5609
     admin-groups: scientists
     hazelcast:
-      server: localhost:5701
+      server: 192.168.209.226:5701,192.168.209.226:5702
     # Example: 'simple' authentication configuration
     users:
     - name: j
@@ -48,7 +53,7 @@ shiny:
     description: Application which demonstrates the basics of a Shiny app
     docker-cmd: ["R", "-e", "shinyproxy::run_01_hello()"]
     docker-image: openanalytics/shinyproxy-demo
-    groups: scientists, mathematicians
+    groups: scientists, mathematicians,shiny
     kubernetes-namespace: shiny
     kubernetes-memory-request: 600Mb
     kubernetes-memory-limit: 1Gi
@@ -57,7 +62,7 @@ shiny:
   - name: 06_tabsets
     docker-cmd: ["R", "-e", "shinyproxy::run_06_tabsets()"]
     docker-image: openanalytics/shinyproxy-demo
-    groups: scientists
+    groups: scientists,shiny
 
 logging:
   level:
