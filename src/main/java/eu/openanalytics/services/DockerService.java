@@ -1165,7 +1165,7 @@ public class DockerService {
 									Long lastPing = proxy.getLastPingTimestamp();
 									if (lastPing == null) lastPing = proxy.getStartupTimestamp();
 									if (currentTimestamp - lastPing > pingInterval) {
-										log.info("Pinging " + proxy.getContainerId() + " name " + proxy.getName());
+										log.info("Pinging " + proxy.getContainerId() + " name " + proxy.getName() + " diff " + (currentTimestamp - lastPing) + " of " + pingInterval + " error " + proxy.getPingErrors());
 										proxy.Ping();
 										if (proxy.getPingErrors() >= pingErrorThreshold) {
 											log.info("Removing container " + proxy.getContainerId() + " because of the failed ping");
