@@ -14,6 +14,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 @Configuration
 @ConditionalOnExpression(ShinyProxyApplication.USE_HAZELCAST)
@@ -58,6 +59,7 @@ public class HazelcastConfiguration {
   }*/
 
   @Bean
+
   public FilterRegistrationBean hazelcastFilter(HazelcastInstance hazelcastInstance) {
     Properties properties = new Properties();
     properties.put("instance-name", hazelcastInstance.getName());
@@ -65,8 +67,8 @@ public class HazelcastConfiguration {
     properties.put("use-client","true");
 
     FilterRegistrationBean registration = new FilterRegistrationBean(new SpringAwareWebFilter(properties));
-
-    registration.addUrlPatterns("/*r");
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    registration.addUrlPatterns("/*");
     registration.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.INCLUDE);
 
     // Configure init parameters as appropriate:
