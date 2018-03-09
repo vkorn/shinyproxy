@@ -200,30 +200,4 @@ public class Proxy implements Serializable {
     public void setKubePod(Pod kubePod) {
         this.kubePod = kubePod;
     }
-
-    private void ping(boolean isSuccess) {
-        this.lastPingTimestamp = System.currentTimeMillis();
-        if (isSuccess) {
-            this.pingErrors = 0;
-        } else {
-            this.pingErrors += 1;
-        }
-    }
-
-    public void Ping() {
-        String urlString = String.format("%s://%s:%d", this.protocol, this.host, this.port);
-        try {
-            URL testURL = new URL(urlString);
-            HttpURLConnection connection = ((HttpURLConnection) testURL.openConnection());
-            connection.setConnectTimeout(5000);
-            int responseCode = connection.getResponseCode();
-            if (responseCode == 200) {
-                this.ping(true);
-            } else {
-                this.ping(false);
-            }
-        } catch (Exception e) {
-            this.ping(false);
-        }
-    }
 }

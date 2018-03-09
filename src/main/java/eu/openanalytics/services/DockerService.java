@@ -647,6 +647,7 @@ public class DockerService {
 			"true".equals(environment.getProperty("shiny.proxy.docker.generate-name", String.valueOf(internalNetworking)));
 
 		Proxy proxy = new Proxy();
+		proxy.setPingErrors(0);
 		proxy.setUserName(userName);
 		proxy.setAppName(appName);
 		if (internalNetworking) {
@@ -1166,7 +1167,25 @@ public class DockerService {
 									if (lastPing == null) lastPing = proxy.getStartupTimestamp();
 									if (currentTimestamp - lastPing > pingInterval) {
 										log.info("Pinging " + proxy.getContainerId() + " name " + proxy.getName() + " diff " + (currentTimestamp - lastPing) + " of " + pingInterval + " error " + proxy.getPingErrors());
-										proxy.Ping();
+										proxy.setLastPingTimestamp(currentTimestamp);
+										String urlString = String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort());
+										try {
+											URL testURL = new URL(urlString);
+											HttpURLConnection connection = ((HttpURLConnection) testURL.openConnection());
+											connection.setConnectTimeout(5000);
+											int responseCode = connection.getResponseCode();
+											if (responseCode == 200) {
+												log.info("Ping ok");
+												proxy.setPingErrors(0);
+											} else {
+												log.info("Ping error");
+												proxy.setPingErrors(proxy.getPingErrors() + 1);
+											}
+										} catch (Exception e) {
+											log.info("Ping error");
+											proxy.setPingErrors(proxy.getPingErrors() + 1);
+										}
+
 										if (proxy.getPingErrors() >= pingErrorThreshold) {
 											log.info("Removing container " + proxy.getContainerId() + " because of the failed ping");
 											proxiesToRemove.add(proxy);
