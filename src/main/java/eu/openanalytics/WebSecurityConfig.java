@@ -27,6 +27,7 @@ import eu.openanalytics.services.AppService.ShinyApp;
 import eu.openanalytics.services.UserService;
 import java.util.Arrays;
 import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
@@ -37,6 +38,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -65,6 +69,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 			.ignoring().antMatchers("/webjars/**");
 	}
 
+	@Autowired
+	private SessionRegistry sessionRegistry;
 	/*@Bean
 	public SessionRegistry sessionRegistry() {
 		return new SessionRegistryImpl();
@@ -100,7 +106,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 			// All other pages are available to authenticated users
 			http.authorizeRequests().anyRequest().fullyAuthenticated();
 
-			http
+			http.sessionManagement()
+					.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+					.sessionFixation()
+					.migrateSession()
+					.maximumSessions(10)
+					.sessionRegistry(sessionRegistry)
+					.and().and()
 				.formLogin()
 					.loginPage("/login")
 					.and()
@@ -113,6 +125,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		authType.get().configureHttpSecurity(http);
 	}
 
+	@Bean
+	public SessionRegistry sessionRegistry() {
+		return new SessionRegistryImpl();
+	}
 	@Bean
 	public GlobalAuthenticationConfigurerAdapter authenticationConfiguration() {
 		return new GlobalAuthenticationConfigurerAdapter() {

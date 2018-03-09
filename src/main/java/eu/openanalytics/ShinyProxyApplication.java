@@ -58,9 +58,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication(exclude = { HazelcastAutoConfiguration.class })
 public class ShinyProxyApplication {
 
-	@Autowired
-	HazelcastConfiguration hazelcastConfiguration;
 
+
+	public static final String USE_HAZELCAST = "true";
 	@Autowired
 	DockerService dockerService;
 

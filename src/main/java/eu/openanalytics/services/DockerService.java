@@ -20,10 +20,6 @@
  */
 package eu.openanalytics.services;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
@@ -51,7 +47,6 @@ import com.spotify.docker.client.messages.swarm.PortConfig;
 import com.spotify.docker.client.messages.swarm.ServiceSpec;
 import com.spotify.docker.client.messages.swarm.Task;
 import com.spotify.docker.client.messages.swarm.TaskSpec;
-import eu.openanalytics.HazelcastConfiguration;
 import eu.openanalytics.ShinyProxyException;
 import eu.openanalytics.domain.Apple;
 import eu.openanalytics.domain.Proxy;
@@ -75,7 +70,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
