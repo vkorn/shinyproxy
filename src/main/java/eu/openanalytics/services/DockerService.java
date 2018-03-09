@@ -938,7 +938,7 @@ public class DockerService {
 		}
 
 	//	activeProxies.add(proxy);
-		activeProxiesMap.putIfAbsent(proxy.hashCode(),proxy);
+		activeProxiesMap.put(proxy.hashCode(),proxy);
 		//launchingProxies.remove(proxy);
 		//launchingProxies.remove(0);
 		//launchingProxies.getPartitionKey()
@@ -1132,6 +1132,7 @@ public class DockerService {
 		Proxy proxy = findProxy(user, app);
 		if (proxy != null) {
 			proxy.setLastHeartbeatTimestamp(System.currentTimeMillis());
+			activeProxiesMap.put(proxy.hashCode(),proxy);
 		}
 	}
 
@@ -1192,6 +1193,7 @@ public class DockerService {
 										}
 									}
 								}
+							activeProxiesMap.put(proxy.hashCode(),proxy);
 						}
 					}
 					for (Proxy proxy: proxiesToRemove) {

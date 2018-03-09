@@ -16,7 +16,7 @@ shiny:
     authentication: simple
     admin-groups: scientists
     hazelcast:
-      server: 192.168.0.210:5701,192.168.0.210:5701
+      server: localhost:5701,localhost:5702
     # Example: 'simple' authentication configuration
     users:
     - name: j
