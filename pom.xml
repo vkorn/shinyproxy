@@ -250,17 +250,11 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.esotericsoftware.yamlbeans/yamlbeans -->
-		<dependency>
-			<groupId>com.esotericsoftware.yamlbeans</groupId>
-			<artifactId>yamlbeans</artifactId>
-			<version>1.06</version>
-		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.springframework.session/spring-session-hazelcast -->
 		<dependency>
 			<groupId>com.hazelcast</groupId>
-			<artifactId>hazelcast-all</artifactId>
-			<version>3.9.3</version>
+			<artifactId>hazelcast-wm</artifactId>
+			<version>3.8.3</version>
 		</dependency>
 
 

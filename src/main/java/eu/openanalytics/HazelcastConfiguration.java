@@ -53,6 +53,7 @@ public class HazelcastConfiguration {
         properties.put("instance-name", hazelcastInstance.getName());
         properties.put("sticky-session", "false");
         properties.put("use-client", "true");
+        properties.put("cookie-max-age", environment.getProperty("server.session.cookie.max-age", "1800"));
 
         FilterRegistrationBean registration = new FilterRegistrationBean(new SpringAwareWebFilter(properties));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
