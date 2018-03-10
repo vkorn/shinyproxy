@@ -21,7 +21,7 @@ shiny:
       credentials-secret: e9e48955-766e-44ee-9a4a-ebae411d5609
     admin-groups: scientists
     hazelcast:
-      server: 192.168.209.226:5701,192.168.209.226:5702
+      server: 192.168.209.226:3000,192.168.209.226:4000
     # Example: 'simple' authentication configuration
     users:
     - name: j

@@ -20,8 +20,15 @@
  */
 package eu.openanalytics.services;
 
+import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IList;
+import com.hazelcast.core.MapEvent;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryEvictedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.MapClearedListener;
+import com.hazelcast.map.listener.MapEvictedListener;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerCertificates;
 import com.spotify.docker.client.DockerClient;
@@ -455,10 +462,58 @@ public class DockerService {
 		}
 	}*/
 
+
+	 class MyEntryListener implements EntryAddedListener<Integer, Proxy>,
+			EntryRemovedListener<Integer, Proxy>,
+			EntryEvictedListener<Integer, Proxy>,
+			MapEvictedListener,
+			MapClearedListener {
+		@Override
+		public void entryAdded( EntryEvent<Integer, Proxy> event ) {
+			//event.
+
+			/*Proxy proxy = event.getValue();
+			event.getKey();*/
+			Proxy proxy = activeProxiesMap().get(event.getKey());
+			for(MappingListener listener : mappingListeners)
+			try {
+				URI target = new URI(
+						String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
+				listener.mappingAdded(proxy.getName(), target);
+			} catch (URISyntaxException ignore) {
+			}
+
+			System.out.println( "Entry Added:" + event );
+		}
+
+		@Override
+		public void entryRemoved( EntryEvent<Integer, Proxy> event ) {
+			System.out.println( "Entry Removed:" + event );
+		}
+
+
+		@Override
+		public void entryEvicted( EntryEvent<Integer, Proxy> event ) {
+			System.out.println( "Entry Evicted:" + event );
+		}
+
+		@Override
+		public void mapEvicted( MapEvent event ) {
+			System.out.println( "Map Evicted:" + event );
+		}
+
+		@Override
+		public void mapCleared( MapEvent event ) {
+			System.out.println( "Map Cleared:" + event );
+		}
+
+	}
+
 	@PostConstruct
 	public void init() {
+	 	hz.getMap("activeProxiesMap").addEntryListener(new MyEntryListener(), false );
 
-		if (kubernetes) {
+	 	if (kubernetes) {
 			log.info("Kubernetes is enabled");
       startCleanUpThread();
 			return;
@@ -940,14 +995,14 @@ public class DockerService {
 			throw new ShinyProxyException("Container did not respond in time");
 		}
 
-		try {
+		/*try {
 			URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
 			synchronized (mappingListeners) {
 				for (MappingListener listener: mappingListeners) {
 					listener.mappingAdded(proxy.getName(), target);
 				}
 			}
-		} catch (URISyntaxException ignore) {}
+		} catch (URISyntaxException ignore) {}*/
 
 		if (logService.isContainerLoggingEnabled()) {
 			try {
@@ -1148,7 +1203,23 @@ public class DockerService {
 	}
 
 	public void addMappingListener(MappingListener listener) {
+
 		mappingListeners.add(listener);
+		if(mappingListeners.size()<=1) {
+			ConcurrentMap<Integer, Proxy> proxiesMap = activeProxiesMap();
+			synchronized (proxiesMap) {
+				Set<Integer> keySet = proxiesMap.keySet();
+				for (Integer key : keySet) {
+					Proxy proxy = proxiesMap.get(key);
+					try {
+						URI target = new URI(
+								String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
+						listener.mappingAdded(proxy.getName(), target);
+						} catch (URISyntaxException ignore) {
+					}
+				}
+			}
+		}
 	}
 
 	public void removeMappingListener(MappingListener listener) {
