@@ -463,38 +463,42 @@ public class DockerService {
 	}*/
 
 
-	 class MyEntryListener implements EntryAddedListener<Integer, Proxy>,
+	 class ProxyEntryListener implements EntryAddedListener<Integer, Proxy>,
 			EntryRemovedListener<Integer, Proxy>,
 			EntryEvictedListener<Integer, Proxy>,
 			MapEvictedListener,
 			MapClearedListener {
 		@Override
 		public void entryAdded( EntryEvent<Integer, Proxy> event ) {
-			//event.
-
-			/*Proxy proxy = event.getValue();
-			event.getKey();*/
-			Proxy proxy = activeProxiesMap().get(event.getKey());
-			for(MappingListener listener : mappingListeners)
-			try {
-				URI target = new URI(
-						String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
-				listener.mappingAdded(proxy.getName(), target);
-			} catch (URISyntaxException ignore) {
+			Proxy proxy = event.getValue();
+			synchronized (mappingListeners) {
+				for (MappingListener listener : mappingListeners)
+					try {
+						URI target = new URI(
+								String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
+						listener.mappingAdded(proxy.getName(), target);
+					} catch (URISyntaxException ignore) {
+					}
 			}
 
-			System.out.println( "Entry Added:" + event );
 		}
 
 		@Override
 		public void entryRemoved( EntryEvent<Integer, Proxy> event ) {
-			System.out.println( "Entry Removed:" + event );
+			delete(event.getOldValue());
 		}
 
 
+		private void delete(Proxy proxy){
+			synchronized (mappingListeners) {
+				for (MappingListener listener : mappingListeners)
+					listener.mappingRemoved(proxy.getName());
+			}
+		}
+
 		@Override
 		public void entryEvicted( EntryEvent<Integer, Proxy> event ) {
-			System.out.println( "Entry Evicted:" + event );
+			delete(event.getOldValue());
 		}
 
 		@Override
@@ -511,7 +515,7 @@ public class DockerService {
 
 	@PostConstruct
 	public void init() {
-	 	hz.getMap("activeProxiesMap").addEntryListener(new MyEntryListener(), false );
+	 	hz.getMap("activeProxiesMap").addEntryListener(new ProxyEntryListener(), true );
 
 	 	if (kubernetes) {
 			log.info("Kubernetes is enabled");
@@ -708,11 +712,11 @@ public class DockerService {
 		if (async) containerKiller.submit(releaser);
 		else releaser.run();
 
-		synchronized (mappingListeners) {
-			for (MappingListener listener: mappingListeners) {
-				listener.mappingRemoved(proxy.getName());
-			}
-		}
+//		synchronized (mappingListeners) {
+//			for (MappingListener listener: mappingListeners) {
+//				listener.mappingRemoved(proxy.getName());
+//			}
+//		}
 	}
 
 	private Proxy startProxy(String userName, String appName) {
@@ -995,14 +999,14 @@ public class DockerService {
 			throw new ShinyProxyException("Container did not respond in time");
 		}
 
-		/*try {
+		try {
 			URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
 			synchronized (mappingListeners) {
 				for (MappingListener listener: mappingListeners) {
 					listener.mappingAdded(proxy.getName(), target);
 				}
 			}
-		} catch (URISyntaxException ignore) {}*/
+		} catch (URISyntaxException ignore) {}
 
 		if (logService.isContainerLoggingEnabled()) {
 			try {
