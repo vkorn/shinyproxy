@@ -677,6 +677,9 @@ public class DockerService {
             throw new ShinyProxyException("Container did not respond in time");
         }
 
+        activeProxiesMap().put(proxy.hashCode(), proxy);
+        launchingProxiesMap().remove(proxy.hashCode());
+
         try {
             URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
             synchronized (mappingListeners) {
@@ -704,8 +707,6 @@ public class DockerService {
             }
         }
 
-        activeProxiesMap().put(proxy.hashCode(), proxy);
-        launchingProxiesMap().remove(proxy.hashCode());
         log.info(String.format("Proxy activated [user: %s] [app: %s] [port: %d]", userName, appName, proxy.getPort()));
         eventService.post(EventType.AppStart.toString(), userName, appName);
 
