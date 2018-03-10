@@ -58,9 +58,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication(exclude = { HazelcastAutoConfiguration.class })
 public class ShinyProxyApplication {
 
-
-
-	public static final String USE_HAZELCAST = "true";
 	@Autowired
 	DockerService dockerService;
 
@@ -100,7 +97,7 @@ public class ShinyProxyApplication {
 			}
 		});
 		factory.setPort(Integer.parseInt(environment.getProperty("shiny.proxy.port", "8080")));
-		return factory;	
+		return factory;
 	}
 
 	private class RootHandlerWrapper implements HandlerWrapper {

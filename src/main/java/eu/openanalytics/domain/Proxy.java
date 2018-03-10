@@ -30,8 +30,6 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Proxy implements Serializable {
-
-    //private HazelcastInstance hz = Hazelcast.newHazelcastInstance();
     private String name;
     private String protocol;
     private String host;
@@ -40,7 +38,6 @@ public class Proxy implements Serializable {
     private String serviceId;
     private String userName;
     private String appName;
-    // public Set<String> sessionIds = hz.getSet("sessionIds");
     private Set<String> sessionIds = new HashSet<>();
     private long startupTimestamp;
     private Long lastHeartbeatTimestamp;

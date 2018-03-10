@@ -13,12 +13,8 @@ shiny:
     container-wait-time: 120000
     container-wait-timeout: 5000
     port: 8080
-    authentication: keycloak
-    keycloak:
-      realm: master
-      auth-server-url: https://keycloak-dev1.edp-test-kp.com/auth
-      resource: testshiny
-      credentials-secret: e9e48955-766e-44ee-9a4a-ebae411d5609
+    ha: true
+    authentication: simple
     admin-groups: scientists
     hazelcast:
       server: 192.168.209.226:3000,192.168.209.226:4000
