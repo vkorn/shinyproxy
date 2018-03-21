@@ -522,6 +522,29 @@ public class DockerService {
                     }
                 }
 
+                String[] k8sSecrets = Optional.ofNullable(app.getKubernetesSecrets()).orElse(new String[]{});
+                if (k8sSecrets.length > 0) {
+                    Volume[] oldVolumes = volumes;
+                    volumes = new Volume[dockerVolumeStrs.length + k8sSecrets.length];
+                    System.arraycopy(oldVolumes, 0, volumes, 0, dockerVolumeStrs.length);
+
+                    String k8sSecretMount = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("/secrets");
+
+                    for (int ii = 0; ii < k8sSecrets.length; ii++) {
+                        SecretVolumeSource source = new SecretVolumeSourceBuilder()
+                                .withSecretName(k8sSecrets[ii])
+                                .build();
+
+                        Volume volume = new VolumeBuilder()
+                                .withName("secret-" + k8sSecrets[ii])
+                                .withNewHostPath(Paths.get(k8sSecretMount, k8sSecrets[ii]).toString())
+                                .withSecret(source)
+                                .build();
+
+                        volumes[dockerVolumeStrs.length + ii] = volume;
+                    }
+                }
+
                 Pod pod = kubeClient.pods().inNamespace(kubeNamespace).createNew()
                         .withApiVersion("v1")
                         .withKind("Pod")

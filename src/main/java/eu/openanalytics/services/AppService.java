@@ -75,6 +75,8 @@ public class AppService {
 		private String kubernetesMemoryLimit;
 		private String kubernetesCpuRequest;
 		private String kubernetesCpuLimit;
+		private String[] kubernetesSecrets;
+		private String kubernetesSecretMountRoot;
 
 		public String getName() {
 			return name;
@@ -228,6 +230,22 @@ public class AppService {
 
 		public void setKubernetesCpuLimit(String kubernetesCpuLimit) {
 			this.kubernetesCpuLimit = kubernetesCpuLimit;
+		}
+
+		public String[] getKubernetesSecrets() {
+			return kubernetesSecrets;
+		}
+
+		public void setKubernetesSecrets(String[] kubernetesSecrets) {
+			this.kubernetesSecrets = kubernetesSecrets;
+		}
+
+		public String getKubernetesSecretMountRoot() {
+			return kubernetesSecretMountRoot;
+		}
+
+		public void setKubernetesSecretMountRoot(String kubernetesSecretMountRoot) {
+			this.kubernetesSecretMountRoot = kubernetesSecretMountRoot;
 		}
 	}
 }
