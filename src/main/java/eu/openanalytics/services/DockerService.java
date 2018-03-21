@@ -502,7 +502,7 @@ public class DockerService {
                     System.arraycopy(oldVolumes, 0, volumes, 0, dockerVolumeStrs.length);
                     System.arraycopy(oldVolumeMounts, 0, volumeMounts, 0, dockerVolumeStrs.length);
 
-                    String k8sSecretMount = Optional.ofNullable(app.getKubernetesCpuLimit()).orElse("/secrets");
+                    String k8sSecretMount = Optional.ofNullable(app.getKubernetesSecretMountRoot()).orElse("/secrets");
 
                     for (int ii = 0; ii < k8sSecrets.length; ii++) {
                         SecretVolumeSource source = new SecretVolumeSourceBuilder()
