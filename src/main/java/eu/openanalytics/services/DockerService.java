@@ -422,6 +422,8 @@ public class DockerService {
         proxy.setPingErrors(0);
         proxy.setUserName(userName);
         proxy.setAppName(appName);
+        proxy.setPingUrl(app.getPingUrl());
+
         if (internalNetworking) {
             proxy.setPort(app.getPort());
         } else {
@@ -716,7 +718,7 @@ public class DockerService {
         launchingProxiesMap().remove(proxy.hashCode());
 
         try {
-            URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
+            URI target = new URI(String.format("%s://%s:%d%s", proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getPingUrl()));
             synchronized (mappingListeners) {
                 for (MappingListener listener : mappingListeners) {
                     listener.mappingAdded(proxy.getName(), target);
@@ -959,7 +961,7 @@ public class DockerService {
                                 if (lastPing == null) lastPing = proxy.getStartupTimestamp();
                                 if (currentTimestamp - lastPing > pingInterval) {
                                     proxy.setLastPingTimestamp(currentTimestamp);
-                                    String urlString = String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort());
+                                    String urlString = String.format("%s://%s:%d%s", proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getPingUrl());
                                     Boolean pingFailed = false;
                                     try {
                                         URL testURL = new URL(urlString);

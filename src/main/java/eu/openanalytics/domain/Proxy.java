@@ -44,6 +44,7 @@ public class Proxy implements Serializable {
     private Pod kubePod;
     private Long lastPingTimestamp;
     private int pingErrors;
+    private String pingUrl;
 
     public String uptime() {
         long uptimeSec = (System.currentTimeMillis() - startupTimestamp) / 1000;
@@ -83,6 +84,7 @@ public class Proxy implements Serializable {
         target.startupTimestamp = this.startupTimestamp;
         target.pingErrors = this.pingErrors;
         target.lastPingTimestamp = this.lastPingTimestamp;
+        target.pingUrl = this.pingUrl;
         return target;
     }
 
@@ -196,5 +198,13 @@ public class Proxy implements Serializable {
 
     public void setKubePod(Pod kubePod) {
         this.kubePod = kubePod;
+    }
+
+    public String getPingUrl() {
+        return pingUrl;
+    }
+
+    public void setPingUrl(String pingUrl) {
+        this.pingUrl = pingUrl;
     }
 }

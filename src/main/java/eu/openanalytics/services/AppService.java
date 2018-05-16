@@ -77,6 +77,7 @@ public class AppService {
 		private String kubernetesCpuLimit;
 		private String[] kubernetesSecrets;
 		private String kubernetesSecretMountRoot;
+		private String pingUrl;
 
 		public String getName() {
 			return name;
@@ -246,6 +247,14 @@ public class AppService {
 
 		public void setKubernetesSecretMountRoot(String kubernetesSecretMountRoot) {
 			this.kubernetesSecretMountRoot = kubernetesSecretMountRoot;
+		}
+
+		public String getPingUrl() {
+			return pingUrl;
+		}
+
+		public void setPingUrl(String pingUrl) {
+			this.pingUrl = pingUrl;
 		}
 	}
 }
