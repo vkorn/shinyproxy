@@ -718,7 +718,7 @@ public class DockerService {
         launchingProxiesMap().remove(proxy.hashCode());
 
         try {
-            URI target = new URI(String.format("%s://%s:%d%s", proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getPingUrl()));
+            URI target = new URI(String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort()));
             synchronized (mappingListeners) {
                 for (MappingListener listener : mappingListeners) {
                     listener.mappingAdded(proxy.getName(), target);
@@ -791,7 +791,7 @@ public class DockerService {
         int timeoutMs = Integer.parseInt(environment.getProperty("shiny.proxy.container-wait-timeout", "5000"));
 
         return retry(i -> {
-            String urlString = String.format("%s://%s:%d", proxy.getProtocol(), proxy.getHost(), proxy.getPort());
+            String urlString = String.format("%s://%s:%d%s", proxy.getProtocol(), proxy.getHost(), proxy.getPort(), proxy.getPingUrl());
             try {
                 URL testURL = new URL(urlString);
                 HttpURLConnection connection = ((HttpURLConnection) testURL.openConnection());
