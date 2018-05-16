@@ -201,6 +201,10 @@ public class Proxy implements Serializable {
     }
 
     public String getPingUrl() {
+        if (null == pingUrl || pingUrl.isEmpty()) {
+            return "";
+        }
+
         return pingUrl;
     }
 
