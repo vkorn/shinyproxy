@@ -43,6 +43,7 @@ import eu.openanalytics.domain.Proxy;
 import eu.openanalytics.services.AppService.ShinyApp;
 import eu.openanalytics.services.EventService.EventType;
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -403,6 +404,10 @@ public class DockerService {
         else releaser.run();
     }
 
+    private String normalizeUserName(String userName) {
+        return userName.toLowerCase().trim().replace(' ', '-').replace('_', '-').replace('.', '-');
+    }
+
     private Proxy startProxy(String userName, String appName) {
 
         ShinyApp app = appService.getApp(appName);
@@ -457,13 +462,65 @@ public class DockerService {
                 VolumeMount[] volumeMounts = new VolumeMount[dockerVolumeStrs.length];
                 for (int i = 0; i < dockerVolumeStrs.length; i++) {
                     String[] dockerVolume = dockerVolumeStrs[i].split(":");
-                    String hostSource = dockerVolume[0];
-                    String containerDest = dockerVolume[1];
                     String name = "shinyproxy-volume-" + i;
-                    volumes[i] = new VolumeBuilder()
-                            .withNewHostPath(hostSource)
-                            .withName(name)
-                            .build();
+                    String containerDest = dockerVolume[1];
+
+                    if (2 == dockerVolume.length) {
+                        // Regular
+                        String hostSource = dockerVolume[0];
+                        volumes[i] = new VolumeBuilder()
+                                .withNewHostPath(hostSource)
+                                .withName(name)
+                                .build();
+
+                    } else if (3 == dockerVolume.length) {
+                        // PV
+                        String type = dockerVolume[0].toLowerCase();
+                        String className = dockerVolume[2];
+
+                        String pvcName;
+
+                        switch (type) {
+                            case "usr": {
+                                pvcName = "mkp-" + normalizeUserName(userName);
+                            }
+                            break;
+                            case "app": {
+                                pvcName = "mkp-" + normalizeUserName(userName) + "-" + normalizeUserName(proxy.getAppName());
+                            }
+                            break;
+                            default: {
+                                throw new ShinyProxyException("Cannot start container: unknown PVC type: " + type);
+                            }
+                        }
+
+                        PersistentVolumeClaim pvc = kubeClient.persistentVolumeClaims().inNamespace(kubeNamespace).withName(pvcName).get();
+
+                        if (null == pvc) {
+                            // TODO: parametrize PV size on global lvl
+                            kubeClient.persistentVolumeClaims().inNamespace(kubeNamespace)
+                                    .createNew()
+                                    .withApiVersion("v1")
+                                    .withKind("PersistentVolumeClaim")
+                                    .withNewMetadata()
+                                    .withName(pvcName)
+                                    .endMetadata()
+                                    .withNewSpec()
+                                    .withAccessModes("ReadWriteMany")
+                                    .withNewResources()
+                                    .addToRequests("storage", new Quantity("5Gi"))
+                                    .endResources()
+                                    .withStorageClassName(className)
+                                    .endSpec()
+                                    .done();
+                        }
+
+                        volumes[i] = new VolumeBuilder()
+                                .withNewPersistentVolumeClaim(pvcName, false)
+                                .withName(name)
+                                .build();
+                    }
+
                     volumeMounts[i] = new VolumeMountBuilder()
                             .withMountPath(containerDest)
                             .withName(name)
@@ -528,6 +585,7 @@ public class DockerService {
                     }
                 }
 
+                // TODO: Parametrize sec context if PVC was used 
                 ContainerBuilder containerBuilder = new ContainerBuilder()
                         .withImage(app.getDockerImage())
                         .withName("shiny-container")
